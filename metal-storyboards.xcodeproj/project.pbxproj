@@ -1,0 +1,367 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		253AB62E20DE61610061A2D3 /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 253AB62D20DE61610061A2D3 /* AppDelegate.mm */; };
+		253AB63120DE61610061A2D3 /* MetalViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 253AB63020DE61610061A2D3 /* MetalViewController.mm */; };
+		253AB63320DE61620061A2D3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 253AB63220DE61620061A2D3 /* Assets.xcassets */; };
+		253AB63620DE61620061A2D3 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 253AB63420DE61620061A2D3 /* Main.storyboard */; };
+		253AB63920DE61620061A2D3 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 253AB63820DE61620061A2D3 /* main.m */; };
+		253AB64320DE654B0061A2D3 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 253AB64120DE654B0061A2D3 /* MetalKit.framework */; };
+		253AB64420DE654B0061A2D3 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 253AB64220DE654B0061A2D3 /* Metal.framework */; };
+		253AB64720DE68450061A2D3 /* Renderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 253AB64620DE68450061A2D3 /* Renderer.mm */; };
+		253AB64C20DE70D90061A2D3 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 253AB64B20DE70D90061A2D3 /* Shaders.metal */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		253AB62920DE61610061A2D3 /* metal-storyboards.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "metal-storyboards.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		253AB62C20DE61610061A2D3 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		253AB62D20DE61610061A2D3 /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
+		253AB62F20DE61610061A2D3 /* MetalViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MetalViewController.h; sourceTree = "<group>"; };
+		253AB63020DE61610061A2D3 /* MetalViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = MetalViewController.mm; sourceTree = "<group>"; };
+		253AB63220DE61620061A2D3 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		253AB63520DE61620061A2D3 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		253AB63720DE61620061A2D3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		253AB63820DE61620061A2D3 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		253AB63A20DE61620061A2D3 /* metal_storyboards.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = metal_storyboards.entitlements; sourceTree = "<group>"; };
+		253AB64120DE654B0061A2D3 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
+		253AB64220DE654B0061A2D3 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		253AB64520DE68450061A2D3 /* Renderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
+		253AB64620DE68450061A2D3 /* Renderer.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Renderer.mm; sourceTree = "<group>"; };
+		253AB64A20DE6E0F0061A2D3 /* ShaderTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShaderTypes.h; sourceTree = "<group>"; };
+		253AB64B20DE70D90061A2D3 /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		253AB62620DE61610061A2D3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				253AB64320DE654B0061A2D3 /* MetalKit.framework in Frameworks */,
+				253AB64420DE654B0061A2D3 /* Metal.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		253AB62020DE61610061A2D3 = {
+			isa = PBXGroup;
+			children = (
+				253AB62B20DE61610061A2D3 /* metal-storyboards */,
+				253AB64020DE654B0061A2D3 /* Frameworks */,
+				253AB62A20DE61610061A2D3 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		253AB62A20DE61610061A2D3 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				253AB62920DE61610061A2D3 /* metal-storyboards.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		253AB62B20DE61610061A2D3 /* metal-storyboards */ = {
+			isa = PBXGroup;
+			children = (
+				253AB63820DE61620061A2D3 /* main.m */,
+				253AB62C20DE61610061A2D3 /* AppDelegate.h */,
+				253AB62D20DE61610061A2D3 /* AppDelegate.mm */,
+				253AB62F20DE61610061A2D3 /* MetalViewController.h */,
+				253AB63020DE61610061A2D3 /* MetalViewController.mm */,
+				253AB64520DE68450061A2D3 /* Renderer.h */,
+				253AB64620DE68450061A2D3 /* Renderer.mm */,
+				253AB64820DE6DF40061A2D3 /* shaders */,
+				253AB63220DE61620061A2D3 /* Assets.xcassets */,
+				253AB63420DE61620061A2D3 /* Main.storyboard */,
+				253AB63720DE61620061A2D3 /* Info.plist */,
+				253AB63A20DE61620061A2D3 /* metal_storyboards.entitlements */,
+			);
+			path = "metal-storyboards";
+			sourceTree = "<group>";
+		};
+		253AB64020DE654B0061A2D3 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				253AB64220DE654B0061A2D3 /* Metal.framework */,
+				253AB64120DE654B0061A2D3 /* MetalKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		253AB64820DE6DF40061A2D3 /* shaders */ = {
+			isa = PBXGroup;
+			children = (
+				253AB64A20DE6E0F0061A2D3 /* ShaderTypes.h */,
+				253AB64B20DE70D90061A2D3 /* Shaders.metal */,
+			);
+			path = shaders;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		253AB62820DE61610061A2D3 /* metal-storyboards */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 253AB63D20DE61620061A2D3 /* Build configuration list for PBXNativeTarget "metal-storyboards" */;
+			buildPhases = (
+				253AB62520DE61610061A2D3 /* Sources */,
+				253AB62620DE61610061A2D3 /* Frameworks */,
+				253AB62720DE61610061A2D3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "metal-storyboards";
+			productName = "metal-storyboards";
+			productReference = 253AB62920DE61610061A2D3 /* metal-storyboards.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		253AB62120DE61610061A2D3 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0940;
+				ORGANIZATIONNAME = "Xavier Slattery";
+				TargetAttributes = {
+					253AB62820DE61610061A2D3 = {
+						CreatedOnToolsVersion = 9.4.1;
+					};
+				};
+			};
+			buildConfigurationList = 253AB62420DE61610061A2D3 /* Build configuration list for PBXProject "metal-storyboards" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 253AB62020DE61610061A2D3;
+			productRefGroup = 253AB62A20DE61610061A2D3 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				253AB62820DE61610061A2D3 /* metal-storyboards */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		253AB62720DE61610061A2D3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				253AB63320DE61620061A2D3 /* Assets.xcassets in Resources */,
+				253AB63620DE61620061A2D3 /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		253AB62520DE61610061A2D3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				253AB64720DE68450061A2D3 /* Renderer.mm in Sources */,
+				253AB63120DE61610061A2D3 /* MetalViewController.mm in Sources */,
+				253AB63920DE61620061A2D3 /* main.m in Sources */,
+				253AB62E20DE61610061A2D3 /* AppDelegate.mm in Sources */,
+				253AB64C20DE70D90061A2D3 /* Shaders.metal in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		253AB63420DE61620061A2D3 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				253AB63520DE61620061A2D3 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		253AB63B20DE61620061A2D3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		253AB63C20DE61620061A2D3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		253AB63E20DE61620061A2D3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "metal-storyboards/metal_storyboards.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 4KUKG4AV23;
+				INFOPLIST_FILE = "metal-storyboards/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.xslattery.metal-storyboards";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		253AB63F20DE61620061A2D3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "metal-storyboards/metal_storyboards.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 4KUKG4AV23;
+				INFOPLIST_FILE = "metal-storyboards/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.xslattery.metal-storyboards";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		253AB62420DE61610061A2D3 /* Build configuration list for PBXProject "metal-storyboards" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				253AB63B20DE61620061A2D3 /* Debug */,
+				253AB63C20DE61620061A2D3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		253AB63D20DE61620061A2D3 /* Build configuration list for PBXNativeTarget "metal-storyboards" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				253AB63E20DE61620061A2D3 /* Debug */,
+				253AB63F20DE61620061A2D3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 253AB62120DE61610061A2D3 /* Project object */;
+}
