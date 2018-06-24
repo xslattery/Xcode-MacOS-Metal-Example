@@ -8,8 +8,7 @@
 
 #import "Scene.h"
 #import "ShaderTypes.h"
-
-#import <simd/math.h>
+#import "Chunk.h"
 
 static const VertexPC triangleVertices[] = {
 	// 3D positions:        RGBA colors:
@@ -41,6 +40,18 @@ static simd::float4x4 orthographic_projection(float r, float l, float t, float b
 	};
 }
 
+static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
+	// TODO(Xavier): Redo all of the vector and matrix maths
+	// with custom version to avoid situations like this.
+	struct TempVec4 { float x, y, z, w; };
+	struct TempMat4 { TempVec4 e[4]; };
+	TempMat4 result = *(TempMat4 *)&matrix;
+	result.e[3].x += direction.x;
+	result.e[3].y += direction.y;
+	result.e[3].z += direction.z;
+	return *(simd::float4x4 *)&result;
+}
+
 @implementation Scene {
 	id<MTLDevice> _device;
 	id<MTLLibrary> _defaultLibrary;
@@ -54,6 +65,8 @@ static simd::float4x4 orthographic_projection(float r, float l, float t, float b
 	float _farPlane;
 	simd::float2 _viewportSize;
 	ViewProjectionMatrices _viewProjectionMatrices;
+	
+	Chunk *_chunk;
 }
 
 - (nullable instancetype)initWithDevice:(nonnull id<MTLDevice>)device size:(CGSize)size {
@@ -64,12 +77,12 @@ static simd::float4x4 orthographic_projection(float r, float l, float t, float b
 	assert(_device);
 	
 	_nearPlane = 0.0;
-	_farPlane = 10.0;
+	_farPlane = 1000.0;
 	_viewportSize = {(float)size.width, (float)size.height};
 	_viewProjectionMatrices.projectionMatrix = orthographic_projection(_viewportSize.x / 2.0f, -_viewportSize.x / 2.0f,
 																	   _viewportSize.y / 2.0f, -_viewportSize.y / 2.0f,
 																	   _nearPlane, _farPlane);
-	_viewProjectionMatrices.viewMatrix = matrix_identity_float4x4;
+	_viewProjectionMatrices.viewMatrix = translate(matrix_identity_float4x4, simd::float3{0, -400, 500});
 	
 	_defaultLibrary = [_device newDefaultLibrary];
 	assert(_defaultLibrary);
@@ -117,6 +130,9 @@ static simd::float4x4 orthographic_projection(float r, float l, float t, float b
 	_vertexBuffer = [_device newBufferWithBytes:triangleVertices length:sizeof(triangleVertices) options:MTLResourceStorageModeShared];
 	_vertexBuffer.label = @"Triangle Vertex Buffer";
 	
+	_chunk = [Chunk new];
+	[_chunk generateMeshWithDevice:_device];
+	
 	return self;
 }
 
@@ -138,14 +154,18 @@ static simd::float4x4 orthographic_projection(float r, float l, float t, float b
 	[renderEncoder setCullMode:MTLCullModeBack];
 	[renderEncoder setFrontFacingWinding:MTLWindingClockwise];
 	
-	[renderEncoder pushDebugGroup:@"First Triangle Drawing"];
 	[renderEncoder setVertexBytes:&_viewProjectionMatrices length:sizeof(ViewProjectionMatrices) atIndex:VertexInputIndexVP];
+	
+	[renderEncoder pushDebugGroup:@"Triangle Group Drawing"];
 	[renderEncoder setVertexBuffer:_vertexBuffer offset:0 atIndex:VertexInputIndexVertices];
 	[renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:sizeof(triangleVertices)/sizeof(VertexPC)];
 	[renderEncoder popDebugGroup];
 	
-	[renderEncoder pushDebugGroup:@"Second triangle Drawing"];
-	[renderEncoder setVertexBytes:&_viewProjectionMatrices length:sizeof(ViewProjectionMatrices) atIndex:VertexInputIndexVP];
+	[renderEncoder pushDebugGroup:@"Chunk Drawing"];
+	[_chunk renderWithEncoder:renderEncoder];
+	[renderEncoder popDebugGroup];
+	
+	[renderEncoder pushDebugGroup:@"Single Triangle Drawing"];
 	[renderEncoder setVertexBytes:secondTriangleVertices length:sizeof(secondTriangleVertices) atIndex:VertexInputIndexVertices];
 	[renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:sizeof(secondTriangleVertices)/sizeof(VertexPC)];
 	[renderEncoder popDebugGroup];
