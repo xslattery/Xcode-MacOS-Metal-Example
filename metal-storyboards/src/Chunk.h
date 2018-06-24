@@ -6,6 +6,8 @@
 //  Copyright © 2018 Xavier Slattery. All rights reserved.
 //
 
+#pragma once
+
 #import <Metal/Metal.h>
 
 @interface Chunk : NSObject

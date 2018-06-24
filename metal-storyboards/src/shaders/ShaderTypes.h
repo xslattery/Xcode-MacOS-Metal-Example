@@ -16,14 +16,23 @@ enum VertexInputIndex {
 	VertexInputIndexVP = 1,
 };
 
-struct VertexPC {
-	simd::float3 position;
-	simd::float4 color;
+enum FragmentInputIndex {
+	FragmentInputIndexTexture = 0,
 };
 
 struct ViewProjectionMatrices {
 	simd::float4x4 projectionMatrix;
 	simd::float4x4 viewMatrix;
+};
+
+struct VertexPC {
+	simd::float3 position;
+	simd::float4 color;
+};
+
+struct VertexPT {
+	simd::float3 position;
+	simd::float2 textureCoord;
 };
 
 #endif /* ShaderTypes_h */
