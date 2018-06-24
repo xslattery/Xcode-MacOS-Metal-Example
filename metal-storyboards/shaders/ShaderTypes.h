@@ -13,12 +13,17 @@
 
 enum VertexInputIndex {
 	VertexInputIndexVertices = 0,
-	VertexInputIndexViewportSize = 1,
+	VertexInputIndexVP = 1,
 };
 
 struct VertexPC {
 	simd::float3 position;
 	simd::float4 color;
+};
+
+struct ViewProjectionMatrices {
+	simd::float4x4 projectionMatrix;
+	simd::float4x4 viewMatrix;
 };
 
 #endif /* ShaderTypes_h */

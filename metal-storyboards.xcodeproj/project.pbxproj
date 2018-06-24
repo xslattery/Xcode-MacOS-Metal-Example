@@ -16,6 +16,7 @@
 		253AB64420DE654B0061A2D3 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 253AB64220DE654B0061A2D3 /* Metal.framework */; };
 		253AB64720DE68450061A2D3 /* Renderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 253AB64620DE68450061A2D3 /* Renderer.mm */; };
 		253AB64C20DE70D90061A2D3 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 253AB64B20DE70D90061A2D3 /* Shaders.metal */; };
+		25FCFAE020DF52CB00780DD8 /* Scene.mm in Sources */ = {isa = PBXBuildFile; fileRef = 25FCFADF20DF52CB00780DD8 /* Scene.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -35,6 +36,8 @@
 		253AB64620DE68450061A2D3 /* Renderer.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Renderer.mm; sourceTree = "<group>"; };
 		253AB64A20DE6E0F0061A2D3 /* ShaderTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShaderTypes.h; sourceTree = "<group>"; };
 		253AB64B20DE70D90061A2D3 /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
+		25FCFADE20DF52CB00780DD8 /* Scene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Scene.h; sourceTree = "<group>"; };
+		25FCFADF20DF52CB00780DD8 /* Scene.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Scene.mm; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -77,6 +80,8 @@
 				253AB63020DE61610061A2D3 /* MetalViewController.mm */,
 				253AB64520DE68450061A2D3 /* Renderer.h */,
 				253AB64620DE68450061A2D3 /* Renderer.mm */,
+				25FCFADE20DF52CB00780DD8 /* Scene.h */,
+				25FCFADF20DF52CB00780DD8 /* Scene.mm */,
 				253AB64820DE6DF40061A2D3 /* shaders */,
 				253AB63220DE61620061A2D3 /* Assets.xcassets */,
 				253AB63420DE61620061A2D3 /* Main.storyboard */,
@@ -173,6 +178,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				25FCFAE020DF52CB00780DD8 /* Scene.mm in Sources */,
 				253AB64720DE68450061A2D3 /* Renderer.mm in Sources */,
 				253AB63120DE61610061A2D3 /* MetalViewController.mm in Sources */,
 				253AB63920DE61620061A2D3 /* main.m in Sources */,

@@ -11,21 +11,21 @@
 
 using namespace metal;
 
+struct VertexInputPC {
+	float3 position [[attribute(0)]];
+	float4 color [[attribute(1)]];
+};
+
 struct RasterDataPC {
 	float4 clipSpacePosition [[position]];
 	float4 color;
 };
 
-vertex RasterDataPC vertexShaderPC ( uint vertexID [[vertex_id]],
-									constant VertexPC *vertices [[buffer(VertexInputIndexVertices)]],
-									constant float2 *viewportSize [[buffer(VertexInputIndexViewportSize)]] ) {
+vertex RasterDataPC vertexShaderPC ( VertexInputPC in [[stage_in]], constant ViewProjectionMatrices *vp [[buffer(VertexInputIndexVP)]]  ) {
 	RasterDataPC result;
 	
-	result.clipSpacePosition = float4(0, 0, 0, 1);
-	result.clipSpacePosition.xy = vertices[vertexID].position.xy / *viewportSize / 1.0;
-	result.clipSpacePosition.z = vertices[vertexID].position.z;
-	
-	result.color = vertices[vertexID].color;
+	result.clipSpacePosition = vp->projectionMatrix * vp->viewMatrix * float4(in.position, 1.0);
+	result.color = in.color;
 	
 	return result;
 }
