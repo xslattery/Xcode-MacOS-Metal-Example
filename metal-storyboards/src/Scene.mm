@@ -113,9 +113,7 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	_nearPlane = 0.0;
 	_farPlane = 1000.0;
 	_viewportSize = {(float)size.width, (float)size.height};
-	_viewProjectionMatrices.projectionMatrix = orthographic_projection(-_viewportSize.x / 2.0f, _viewportSize.x / 2.0f,
-																	   0.0f, _viewportSize.y,
-																	   _nearPlane, _farPlane);
+	_viewProjectionMatrices.projectionMatrix = orthographic_projection(-_viewportSize.x / 2.0f, _viewportSize.x / 2.0f, 0.0f, _viewportSize.y, _nearPlane, _farPlane);
 	_viewProjectionMatrices.viewMatrix = translate(matrix_identity_float4x4, simd::float3{0, 0, 500});
 	
 	//////////////////////////////
@@ -236,9 +234,7 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 
 - (void)resize:(CGSize)size {
 	_viewportSize = {(float)size.width, (float)size.height};
-	_viewProjectionMatrices.projectionMatrix = orthographic_projection(-_viewportSize.x / 2.0f, _viewportSize.x / 2.0f,
-																	   0.0f, _viewportSize.y,
-																	   _nearPlane, _farPlane);
+	_viewProjectionMatrices.projectionMatrix = orthographic_projection(-_viewportSize.x / 2.0f, _viewportSize.x / 2.0f, 0.0f, _viewportSize.y, _nearPlane, _farPlane);
 }
 
 - (void)renderWithCommandBuffer:(nonnull id<MTLCommandBuffer>)commandBuffer renderPassDescriptor:(nonnull MTLRenderPassDescriptor *)renderPassDescriptor {
@@ -249,17 +245,17 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	[renderEncoder setDepthStencilState:_depthStencilState];
 	[renderEncoder setCullMode:MTLCullModeBack];
 	[renderEncoder setFrontFacingWinding:MTLWindingClockwise];
-	
-	[renderEncoder setRenderPipelineState:_renderPipelineStatePC];
-	[renderEncoder setVertexBytes:&_viewProjectionMatrices length:sizeof(ViewProjectionMatrices) atIndex:VertexInputIndexVP];
 
-	[renderEncoder pushDebugGroup:@"Triangle Group Drawing"];
-	[renderEncoder setVertexBuffer:_vertexBuffer offset:0 atIndex:VertexInputIndexVertices];
-	[renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:sizeof(triangleVertices)/sizeof(VertexPC)];
-	[renderEncoder popDebugGroup];
+	[renderEncoder setVertexBytes:&_viewProjectionMatrices length:sizeof(ViewProjectionMatrices) atIndex:VertexInputIndexVP];
+	
+//	[renderEncoder setRenderPipelineState:_renderPipelineStatePC];
+//
+//	[renderEncoder pushDebugGroup:@"Triangle Group Drawing"];
+//	[renderEncoder setVertexBuffer:_vertexBuffer offset:0 atIndex:VertexInputIndexVertices];
+//	[renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:sizeof(triangleVertices)/sizeof(VertexPC)];
+//	[renderEncoder popDebugGroup];
 	
 	[renderEncoder setRenderPipelineState:_renderPipelineStatePT];
-	[renderEncoder setVertexBytes:&_viewProjectionMatrices length:sizeof(ViewProjectionMatrices) atIndex:VertexInputIndexVP];
 	[renderEncoder setFragmentTexture:_texture atIndex:FragmentInputIndexTexture];
 	
 //	[renderEncoder pushDebugGroup:@"Single Textured Triangle Drawing"];

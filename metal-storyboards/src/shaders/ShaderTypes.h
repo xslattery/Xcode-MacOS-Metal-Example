@@ -14,6 +14,7 @@
 enum VertexInputIndex {
 	VertexInputIndexVertices = 0,
 	VertexInputIndexVP = 1,
+	VertexInputIndexSpriteData = 2,
 };
 
 enum FragmentInputIndex {
@@ -33,6 +34,16 @@ struct VertexPC {
 struct VertexPT {
 	simd::float3 position;
 	simd::float2 textureCoord;
+};
+
+struct SpriteData {
+	simd::float3 position;
+	simd::float4 pad0;
+	simd::float4 pad1;
+	simd::float4 pad2;
+	simd::float4x4 pad3;
+	simd::float4x4 pad4;
+	simd::float4x4 pad5;
 };
 
 #endif /* ShaderTypes_h */

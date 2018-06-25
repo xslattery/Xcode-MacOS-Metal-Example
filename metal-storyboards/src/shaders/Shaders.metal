@@ -51,10 +51,10 @@ struct FragOutPT {
 	float depth [[depth(less)]];
 };
 
-vertex RasterDataPT vertexShaderPT ( VertexInputPT in [[stage_in]], constant ViewProjectionMatrices *vp [[buffer(VertexInputIndexVP)]]  ) {
+vertex RasterDataPT vertexShaderPT ( VertexInputPT in [[stage_in]], constant ViewProjectionMatrices *vp [[buffer(VertexInputIndexVP)]], constant SpriteData *spriteData [[buffer(VertexInputIndexSpriteData)]] ) {
 	RasterDataPT result;
 	
-	result.clipSpacePosition = vp->projectionMatrix * vp->viewMatrix * float4(in.position, 1.0);
+	result.clipSpacePosition = vp->projectionMatrix * vp->viewMatrix * float4(in.position + spriteData->position, 1.0);
 	result.textureCoord = in.textureCoord;
 	
 	return result;

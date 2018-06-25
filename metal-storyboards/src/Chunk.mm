@@ -11,8 +11,8 @@
 #import "Perlin.hpp"
 #import <vector>
 
-#define CHUNK_LENGTH 32
-#define CHUNK_WIDTH  32
+#define CHUNK_LENGTH 16
+#define CHUNK_WIDTH  16
 #define CHUNK_HEIGHT 16
 
 static float generate_height_data ( float xx, float yy, float scale, int octaves, float persistance, float lacunarity, bool power ) {
@@ -46,19 +46,36 @@ static float generate_height_data ( float xx, float yy, float scale, int octaves
 @implementation Chunk {
 	id<MTLBuffer> _vertexBuffer;
 	id<MTLBuffer> _indexBuffer;
-	NSUInteger indexCount;
+	NSUInteger _indexCount;
+	
+	id<MTLBuffer> _spriteDataBuffer;
+	NSUInteger _spriteCount;
 }
 
 - (void)generateMeshWithDevice:(nonnull id<MTLDevice>)device {
-	std::vector<VertexPT> vertexData;
-	std::vector<uint32_t> indexData;
+	// Setup Single Sprite to be drawn multiple times in different places:
+	const simd::float2 textureTopLeft {0, 1.0f/512*68};
+	const simd::float2 textureBottomRight {1.0f/512*54,	0.0f};
+	uint32_t tempIndices [6] = {
+		0, 1, 2,
+		0, 2, 3
+	};
+	VertexPT tempVerts [4] = {
+		{{-27.0f,  0.0f, 0},	{textureTopLeft.x, textureBottomRight.y}},
+		{{-27.0f, 68.0f, 0},	{textureTopLeft.x, textureTopLeft.y}},
+		{{ 27.0f, 68.0f, 0},	{textureBottomRight.x, textureTopLeft.y}},
+		{{ 27.0f,  0.0f, 0},	{textureBottomRight.x, textureBottomRight.y}},
+	};
+	_vertexBuffer = [device newBufferWithBytes:tempVerts length:sizeof(tempVerts)*sizeof(VertexPT) options:MTLResourceStorageModeShared];
+	_indexBuffer = [device newBufferWithBytes:tempIndices length:sizeof(tempIndices)*sizeof(uint32_t) options:MTLResourceStorageModeShared];
+	_indexCount = sizeof(tempIndices);
+	
+	//////////////////////////
+	
+	std::vector<SpriteData> spriteData;
 	
 	const simd::float2 xAxisDirection {-1, 18.0f/27.0f};
 	const simd::float2 zAxisDirection { 1, 18.0f/27.0f};
-	
-	const simd::float2 textureTopLeft {0, 1.0f/512*68};
-	const simd::float2 textureBottomRight {1.0f/512*54,	0.0f};
-	
 	for (size_t y = 0; y < CHUNK_HEIGHT; ++y) {
 		for (size_t z = 0; z < CHUNK_WIDTH; ++z) {
 			for (size_t x = 0; x < CHUNK_LENGTH; ++x) {
@@ -72,33 +89,24 @@ static float generate_height_data ( float xx, float yy, float scale, int octaves
 					tileBottomMiddlePosition += simd::float2{ 0, 30 } * (yy);
 					tileDepth = (xx + zz) - yy*2;
 					
-					const uint32_t idxP = (uint32_t)vertexData.size();
-					uint32_t tempIndices [6] = {
-						idxP+0, idxP+1, idxP+2,
-						idxP+0, idxP+2, idxP+3
-					};
-					indexData.insert( indexData.end(), tempIndices, tempIndices+6 );
-					
-					VertexPT tempVerts [4] = {
-						{{-27.0f+tileBottomMiddlePosition.x,  0.0f+tileBottomMiddlePosition.y, tileDepth},	{textureTopLeft.x, textureBottomRight.y}},
-						{{-27.0f+tileBottomMiddlePosition.x, 68.0f+tileBottomMiddlePosition.y, tileDepth},	{textureTopLeft.x, textureTopLeft.y}},
-						{{ 27.0f+tileBottomMiddlePosition.x, 68.0f+tileBottomMiddlePosition.y, tileDepth},	{textureBottomRight.x, textureTopLeft.y}},
-						{{ 27.0f+tileBottomMiddlePosition.x,  0.0f+tileBottomMiddlePosition.y, tileDepth},	{textureBottomRight.x, textureBottomRight.y}},
-					};
-					vertexData.insert( vertexData.end(), tempVerts, tempVerts+4 );
+					spriteData.push_back(SpriteData{{tileBottomMiddlePosition.x, tileBottomMiddlePosition.y, tileDepth}});
 				}
 			}
 		}
 	}
 	
-	_vertexBuffer = [device newBufferWithBytes:&vertexData[0] length:vertexData.size()*sizeof(VertexPT) options:MTLResourceStorageModeShared];
-	_indexBuffer = [device newBufferWithBytes:&indexData[0] length:indexData.size()*sizeof(uint32_t) options:MTLResourceStorageModeShared];
-	indexCount = indexData.size();
+	_spriteDataBuffer = [device newBufferWithBytes:&spriteData[0] length:spriteData.size()*sizeof(SpriteData) options:MTLResourceStorageModeShared];
+	_spriteCount = spriteData.size();
 }
 
 - (void)renderWithEncoder:(nonnull id<MTLRenderCommandEncoder>)commandEncoder {
 	[commandEncoder setVertexBuffer:_vertexBuffer offset:0 atIndex:VertexInputIndexVertices];
-	[commandEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle indexCount:indexCount indexType:MTLIndexTypeUInt32 indexBuffer:_indexBuffer indexBufferOffset:0];
+	[commandEncoder setVertexBuffer:_spriteDataBuffer offset:0 atIndex:VertexInputIndexSpriteData];
+	
+	for (size_t i = 0; i < _spriteCount; ++i) {
+		[commandEncoder setVertexBufferOffset:i*256 atIndex:VertexInputIndexSpriteData];
+		[commandEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle indexCount:_indexCount indexType:MTLIndexTypeUInt32 indexBuffer:_indexBuffer indexBufferOffset:0];
+	}
 }
 
 @end

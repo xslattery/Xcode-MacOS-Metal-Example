@@ -43,7 +43,7 @@
 	assert(_view.device);
 	NSLog(@"GPU: %@", [_view.device name]);
 	
-	_view.preferredFramesPerSecond = 60;
+	_view.preferredFramesPerSecond = 30;
 	_view.framebufferOnly = NO;
 	_view.sampleCount = 1;
 	_view.colorPixelFormat = MTLPixelFormatBGRA8Unorm;
