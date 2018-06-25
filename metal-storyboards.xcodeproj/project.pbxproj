@@ -22,6 +22,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2506602920E0F40F000054A6 /* stb_image.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = stb_image.h; sourceTree = "<group>"; };
 		253AB62920DE61610061A2D3 /* metal-storyboards.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "metal-storyboards.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		253AB62C20DE61610061A2D3 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		253AB62D20DE61610061A2D3 /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
@@ -40,7 +41,6 @@
 		253AB64B20DE70D90061A2D3 /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
 		25AF9C5D20DF9A660058C020 /* TileMap.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TileMap.png; sourceTree = "<group>"; };
 		25AF9C6020DFA6070058C020 /* Perlin.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Perlin.hpp; sourceTree = "<group>"; };
-		25B5556E20E092DD00EF9A3A /* stb_image.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = stb_image.h; sourceTree = "<group>"; };
 		25FCFADE20DF52CB00780DD8 /* Scene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Scene.h; sourceTree = "<group>"; };
 		25FCFADF20DF52CB00780DD8 /* Scene.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Scene.mm; sourceTree = "<group>"; };
 		25FCFAE120DF630C00780DD8 /* Chunk.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Chunk.h; sourceTree = "<group>"; };
@@ -60,10 +60,21 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		2506602820E0F40F000054A6 /* libs */ = {
+			isa = PBXGroup;
+			children = (
+				2506602920E0F40F000054A6 /* stb_image.h */,
+			);
+			path = libs;
+			sourceTree = "<group>";
+		};
 		253AB62020DE61610061A2D3 = {
 			isa = PBXGroup;
 			children = (
-				253AB62B20DE61610061A2D3 /* metal-storyboards */,
+				253AB62B20DE61610061A2D3 /* macos */,
+				25AF9C5320DF948F0058C020 /* src */,
+				25AF9C5C20DF9A660058C020 /* res */,
+				2506602820E0F40F000054A6 /* libs */,
 				253AB64020DE654B0061A2D3 /* Frameworks */,
 				253AB62A20DE61610061A2D3 /* Products */,
 			);
@@ -77,18 +88,15 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		253AB62B20DE61610061A2D3 /* metal-storyboards */ = {
+		253AB62B20DE61610061A2D3 /* macos */ = {
 			isa = PBXGroup;
 			children = (
-				25AF9C5320DF948F0058C020 /* src */,
-				25B5556D20E092DD00EF9A3A /* libs */,
-				25AF9C5C20DF9A660058C020 /* res */,
 				253AB63220DE61620061A2D3 /* Assets.xcassets */,
 				253AB63420DE61620061A2D3 /* Main.storyboard */,
 				253AB63720DE61620061A2D3 /* Info.plist */,
 				253AB63A20DE61620061A2D3 /* metal_storyboards.entitlements */,
 			);
-			path = "metal-storyboards";
+			path = macos;
 			sourceTree = "<group>";
 		};
 		253AB64020DE654B0061A2D3 /* Frameworks */ = {
@@ -112,6 +120,7 @@
 		25AF9C5320DF948F0058C020 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				253AB64820DE6DF40061A2D3 /* shaders */,
 				253AB63820DE61620061A2D3 /* main.m */,
 				253AB62C20DE61610061A2D3 /* AppDelegate.h */,
 				253AB62D20DE61610061A2D3 /* AppDelegate.mm */,
@@ -124,7 +133,6 @@
 				25FCFAE120DF630C00780DD8 /* Chunk.h */,
 				25FCFAE220DF630C00780DD8 /* Chunk.mm */,
 				25AF9C6020DFA6070058C020 /* Perlin.hpp */,
-				253AB64820DE6DF40061A2D3 /* shaders */,
 			);
 			path = src;
 			sourceTree = "<group>";
@@ -135,14 +143,6 @@
 				25AF9C5D20DF9A660058C020 /* TileMap.png */,
 			);
 			path = res;
-			sourceTree = "<group>";
-		};
-		25B5556D20E092DD00EF9A3A /* libs */ = {
-			isa = PBXGroup;
-			children = (
-				25B5556E20E092DD00EF9A3A /* stb_image.h */,
-			);
-			path = libs;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -352,12 +352,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = "metal-storyboards/metal_storyboards.entitlements";
+				CODE_SIGN_ENTITLEMENTS = macos/metal_storyboards.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = 4KUKG4AV23;
-				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/metal-storyboards/libs/";
-				INFOPLIST_FILE = "metal-storyboards/Info.plist";
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/libs/";
+				INFOPLIST_FILE = "$(SRCROOT)/macos/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -371,12 +371,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = "metal-storyboards/metal_storyboards.entitlements";
+				CODE_SIGN_ENTITLEMENTS = macos/metal_storyboards.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = 4KUKG4AV23;
-				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/metal-storyboards/libs/";
-				INFOPLIST_FILE = "metal-storyboards/Info.plist";
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/libs/";
+				INFOPLIST_FILE = "$(SRCROOT)/macos/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
