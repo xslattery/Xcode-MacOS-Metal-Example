@@ -38,9 +38,9 @@
 		253AB64620DE68450061A2D3 /* Renderer.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Renderer.mm; sourceTree = "<group>"; };
 		253AB64A20DE6E0F0061A2D3 /* ShaderTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShaderTypes.h; sourceTree = "<group>"; };
 		253AB64B20DE70D90061A2D3 /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
-		25AF9C5120DF93220058C020 /* stb_image.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = stb_image.h; sourceTree = "<group>"; };
 		25AF9C5D20DF9A660058C020 /* TileMap.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TileMap.png; sourceTree = "<group>"; };
 		25AF9C6020DFA6070058C020 /* Perlin.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Perlin.hpp; sourceTree = "<group>"; };
+		25B5556E20E092DD00EF9A3A /* stb_image.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = stb_image.h; sourceTree = "<group>"; };
 		25FCFADE20DF52CB00780DD8 /* Scene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Scene.h; sourceTree = "<group>"; };
 		25FCFADF20DF52CB00780DD8 /* Scene.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Scene.mm; sourceTree = "<group>"; };
 		25FCFAE120DF630C00780DD8 /* Chunk.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Chunk.h; sourceTree = "<group>"; };
@@ -81,7 +81,7 @@
 			isa = PBXGroup;
 			children = (
 				25AF9C5320DF948F0058C020 /* src */,
-				25AF9C5F20DFA57F0058C020 /* libs */,
+				25B5556D20E092DD00EF9A3A /* libs */,
 				25AF9C5C20DF9A660058C020 /* res */,
 				253AB63220DE61620061A2D3 /* Assets.xcassets */,
 				253AB63420DE61620061A2D3 /* Main.storyboard */,
@@ -137,10 +137,10 @@
 			path = res;
 			sourceTree = "<group>";
 		};
-		25AF9C5F20DFA57F0058C020 /* libs */ = {
+		25B5556D20E092DD00EF9A3A /* libs */ = {
 			isa = PBXGroup;
 			children = (
-				25AF9C5120DF93220058C020 /* stb_image.h */,
+				25B5556E20E092DD00EF9A3A /* stb_image.h */,
 			);
 			path = libs;
 			sourceTree = "<group>";
@@ -356,6 +356,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = 4KUKG4AV23;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/metal-storyboards/libs/";
 				INFOPLIST_FILE = "metal-storyboards/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -374,6 +375,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = 4KUKG4AV23;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/metal-storyboards/libs/";
 				INFOPLIST_FILE = "metal-storyboards/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

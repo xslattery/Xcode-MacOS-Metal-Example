@@ -10,7 +10,7 @@
 #import "ShaderTypes.h"
 #import "Chunk.h"
 #define STB_IMAGE_IMPLEMENTATION
-#import "stb_image.h"
+#import <stb_image.h>
 
 static const VertexPC triangleVertices[] = {
 	// 3D Positions:        RGBA Colors:
@@ -34,13 +34,7 @@ static const VertexPT secondTriangleVertices[] = {
 	{ { 250,    0, 0 }, { 1, 0 } },
 };
 
-static simd::float4x4 orthographic_projection(const float& left,
-											  const float& right,
-											  const float& bottom,
-											  const float& top,
-											  const float& near,
-											  const float& far)
-{
+static simd::float4x4 orthographic_projection(const float& left, const float& right, const float& bottom, const float& top, const float& near, const float& far) {
 	float sLength = 1.0f / (right - left);
 	float sHeight = 1.0f / (top   - bottom);
 	float sDepth  = 1.0f / (far   - near);

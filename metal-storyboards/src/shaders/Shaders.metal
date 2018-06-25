@@ -46,6 +46,11 @@ struct RasterDataPT {
 	float2 textureCoord;
 };
 
+struct FragOutPT {
+	float4 color [[color(0)]] ;
+	float depth [[depth(less)]];
+};
+
 vertex RasterDataPT vertexShaderPT ( VertexInputPT in [[stage_in]], constant ViewProjectionMatrices *vp [[buffer(VertexInputIndexVP)]]  ) {
 	RasterDataPT result;
 	
@@ -55,10 +60,15 @@ vertex RasterDataPT vertexShaderPT ( VertexInputPT in [[stage_in]], constant Vie
 	return result;
 }
 
-fragment float4 fragmentShaderPT ( RasterDataPT input [[stage_in]], texture2d<half> colorTexture [[texture(FragmentInputIndexTexture)]] ) {
+fragment FragOutPT fragmentShaderPT ( RasterDataPT input [[stage_in]], texture2d<half> colorTexture [[texture(FragmentInputIndexTexture)]] ) {
+	FragOutPT result;
+	
 	constexpr sampler textureSampler (mag_filter::linear, min_filter::linear);
 	const half4 colorSample = colorTexture.sample(textureSampler, input.textureCoord);
-	if (colorSample.a < 0.01)
-		discard_fragment();
-	return float4(colorSample);
+	result.color = float4(colorSample);
+	
+	if (colorSample.a < 0.01) result.depth = 1.0;
+	else result.depth = input.clipSpacePosition.z;
+	
+	return result;
 }
