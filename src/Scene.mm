@@ -27,11 +27,15 @@ static const VertexPC triangleVertices[] = {
 	{ { -200,  300, 0.6 }, { 0, 0, 1, 1 } },
 };
 
-static const VertexPT secondTriangleVertices[] = {
-	// 3D Positions:     Texture Coords:
-	{ {   0,    0, 0 }, { 0, 0 } },
-	{ {   0,  250, 0 }, { 0, 1 } },
-	{ { 250,    0, 0 }, { 1, 0 } },
+static const VertexPT quadVertices[] = {
+	// 3D Pos:       Tex:
+	{ {-1, -1, 0 }, { 0, 1 } },
+	{ {-1,  1, 0 }, { 0, 0 } },
+	{ { 1, -1, 0 }, { 1, 1 } },
+	
+	{ { 1, -1, 0 }, { 1, 1 } },
+	{ {-1,  1, 0 }, { 0, 0 } },
+	{ { 1,  1, 0 }, { 1, 0 } },
 };
 
 static simd::float4x4 orthographic_projection(const float& left, const float& right, const float& bottom, const float& top, const float& near, const float& far) {
@@ -100,6 +104,9 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	id<MTLTexture> _waterColorTexture;
 	MTLRenderPassDescriptor *_waterRenderPassDescriptor;
 	id<MTLRenderPipelineState> _waterRenderPipelineStatePT;
+	id<MTLRenderPipelineState> _renderPipelineStatCompositePT;
+	id<MTLDepthStencilState> _waterOverlayDepthStencilState;
+	ViewProjectionMatrices _waterOverlayViewProjectionMatrices;
 	
 	Chunk *_chunk;
 }
@@ -120,6 +127,9 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	_viewportSize = {(float)size.width, (float)size.height};
 	_viewProjectionMatrices.projectionMatrix = orthographic_projection(-_viewportSize.x / 2.0f, _viewportSize.x / 2.0f, 0.0f, _viewportSize.y, _nearPlane, _farPlane);
 	_viewProjectionMatrices.viewMatrix = translate(matrix_identity_float4x4, simd::float3{0, 0, 500});
+	
+	_waterOverlayViewProjectionMatrices.projectionMatrix = orthographic_projection(-1.0, 1.0, -1.0, 1.0, _nearPlane, _farPlane);
+	_waterOverlayViewProjectionMatrices.viewMatrix = translate(matrix_identity_float4x4, simd::float3{0, 0, 500});
 	
 	//////////////////////////////
 	
@@ -218,6 +228,31 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	
 	//////////////////////////////
 	
+	id<MTLFunction> vertexFunctionComposetPT = [_defaultLibrary newFunctionWithName:@"vertexShaderComposetPT"];
+	id<MTLFunction> fragmentFunctionComposetPT = [_defaultLibrary newFunctionWithName:@"fragmentShaderComposetPT"];
+	assert(vertexFunctionComposetPT);
+	assert(fragmentFunctionComposetPT);
+	
+	MTLRenderPipelineDescriptor *pipelineStateDescriptorCompositePT = [MTLRenderPipelineDescriptor new];
+	pipelineStateDescriptorCompositePT.label = @"Water Overlay Renderer Pipeline";
+	pipelineStateDescriptorCompositePT.vertexFunction = vertexFunctionComposetPT;
+	pipelineStateDescriptorCompositePT.fragmentFunction = fragmentFunctionComposetPT;
+	pipelineStateDescriptorCompositePT.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
+	pipelineStateDescriptorCompositePT.colorAttachments[0].blendingEnabled = YES;
+	pipelineStateDescriptorCompositePT.colorAttachments[0].rgbBlendOperation = MTLBlendOperationAdd;
+	pipelineStateDescriptorCompositePT.colorAttachments[0].alphaBlendOperation = MTLBlendOperationAdd;
+	pipelineStateDescriptorCompositePT.colorAttachments[0].sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
+	pipelineStateDescriptorCompositePT.colorAttachments[0].sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
+	pipelineStateDescriptorCompositePT.colorAttachments[0].destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+	pipelineStateDescriptorCompositePT.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusBlendAlpha;
+	pipelineStateDescriptorCompositePT.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
+	
+	_renderPipelineStatCompositePT = [_device newRenderPipelineStateWithDescriptor:pipelineStateDescriptorCompositePT error:&error];
+	if (!_renderPipelineStatCompositePT) NSLog(@"%@", error);
+	assert(_renderPipelineStatCompositePT);
+	
+	//////////////////////////////
+	
 	MTLDepthStencilDescriptor *depthStencilDescriptor = [MTLDepthStencilDescriptor new];
 	depthStencilDescriptor.depthCompareFunction = MTLCompareFunctionLess;
 	depthStencilDescriptor.depthWriteEnabled = YES;
@@ -225,6 +260,15 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	_depthStencilState = [_device newDepthStencilStateWithDescriptor:depthStencilDescriptor];
 	
 	//////////////////////////////
+	
+	MTLDepthStencilDescriptor *waterOverlayDepthStencilDescriptor = [MTLDepthStencilDescriptor new];
+	waterOverlayDepthStencilDescriptor.depthCompareFunction = MTLCompareFunctionAlways;
+	waterOverlayDepthStencilDescriptor.depthWriteEnabled = YES;
+	
+	_waterOverlayDepthStencilState = [_device newDepthStencilStateWithDescriptor:depthStencilDescriptor];
+	
+	//////////////////////////////
+	
 	
 	_vertexBuffer = [_device newBufferWithBytes:triangleVertices length:sizeof(triangleVertices) options:MTLResourceStorageModeShared];
 	_vertexBuffer.label = @"Triangle Vertex Buffer";
@@ -328,7 +372,6 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 
 - (void)renderWithCommandBuffer:(nonnull id<MTLCommandBuffer>)commandBuffer renderPassDescriptor:(nonnull MTLRenderPassDescriptor *)renderPassDescriptor {
 	id<MTLRenderCommandEncoder> waterRenderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:_waterRenderPassDescriptor];
-	
 	waterRenderEncoder.label = @"Water Pass";
 	
 	[waterRenderEncoder setViewport:(MTLViewport){0.0, 0.0, _viewportSize.x, _viewportSize.y, 0, 1.0 }];
@@ -336,11 +379,13 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	[waterRenderEncoder setCullMode: MTLCullModeBack];
 	[waterRenderEncoder setFrontFacingWinding:MTLWindingClockwise];
 	
+	// Draw Water:
+	[waterRenderEncoder pushDebugGroup:@"Chunk Water Drawing"];
 	[waterRenderEncoder setRenderPipelineState:_waterRenderPipelineStatePT];
 	[waterRenderEncoder setVertexBytes:&_viewProjectionMatrices length:sizeof(ViewProjectionMatrices) atIndex:VertexInputIndexVP];
-	[waterRenderEncoder setFragmentTexture:_texture atIndex:FragmentInputIndexTexture];
-	
+	[waterRenderEncoder setFragmentTexture:_texture atIndex:FragmentInputIndexTexture0];
 	[_chunk renderWaterWithEncoder:waterRenderEncoder];
+	[waterRenderEncoder popDebugGroup];
 	
 	[waterRenderEncoder endEncoding];
 	
@@ -350,35 +395,39 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	// Currently there is a warning about getting it too early.
 	
 	id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
-	renderEncoder.label = @"Render Encoder";
+	renderEncoder.label = @"Main Render Encoder";
 	
 	[renderEncoder setViewport:(MTLViewport){0.0, 0.0, _viewportSize.x, _viewportSize.y, 0, 1.0 }];
 	[renderEncoder setDepthStencilState:_depthStencilState];
 	[renderEncoder setCullMode:MTLCullModeBack];
 	[renderEncoder setFrontFacingWinding:MTLWindingClockwise];
 	
-//	[renderEncoder setRenderPipelineState:_renderPipelineStatePC];
-//	[renderEncoder setVertexBytes:&_viewProjectionMatrices length:sizeof(ViewProjectionMatrices) atIndex:VertexInputIndexVP];
-
-//	[renderEncoder pushDebugGroup:@"Triangle Group Drawing"];
-//	[renderEncoder setVertexBuffer:_vertexBuffer offset:0 atIndex:VertexInputIndexVertices];
-//	[renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:sizeof(triangleVertices)/sizeof(VertexPC)];
-//	[renderEncoder popDebugGroup];
-	
-	[renderEncoder setRenderPipelineState:_renderPipelineStatePT];
 	[renderEncoder setVertexBytes:&_viewProjectionMatrices length:sizeof(ViewProjectionMatrices) atIndex:VertexInputIndexVP];
-	[renderEncoder setFragmentTexture:_texture atIndex:FragmentInputIndexTexture];
 	
-//	[renderEncoder pushDebugGroup:@"Single Textured Triangle Drawing"];
-//	[renderEncoder setVertexBytes:secondTriangleVertices length:sizeof(secondTriangleVertices) atIndex:VertexInputIndexVertices];
-//	[renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:sizeof(secondTriangleVertices)/sizeof(VertexPC)];
-//	[renderEncoder popDebugGroup];
-
+	// Draw Triangles:
+	[renderEncoder pushDebugGroup:@"Triangle Group Drawing"];
+	[renderEncoder setRenderPipelineState:_renderPipelineStatePC];
+	[renderEncoder setVertexBuffer:_vertexBuffer offset:0 atIndex:VertexInputIndexVertices];
+	[renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:sizeof(triangleVertices)/sizeof(VertexPC)];
+	[renderEncoder popDebugGroup];
+	
+	// Draw Chunk:
 	[renderEncoder pushDebugGroup:@"Chunk Drawing"];
+	[renderEncoder setRenderPipelineState:_renderPipelineStatePT];
+	[renderEncoder setFragmentTexture:_texture atIndex:FragmentInputIndexTexture0];
 	[_chunk renderWallsWithEncoder:renderEncoder];
 	[renderEncoder popDebugGroup];
 	
-	// TODO(Xavier): Composit Water On Terrain:
+	// Composite Water On Terrain:
+	[renderEncoder pushDebugGroup:@"Chunk Water Composite"];
+	[renderEncoder setRenderPipelineState:_renderPipelineStatCompositePT];
+	[renderEncoder setDepthStencilState:_waterOverlayDepthStencilState];
+	[renderEncoder setVertexBytes:&_waterOverlayViewProjectionMatrices length:sizeof(ViewProjectionMatrices) atIndex:VertexInputIndexVP];
+	[renderEncoder setFragmentTexture:_waterColorTexture atIndex:FragmentInputIndexTexture0];
+	[renderEncoder setFragmentTexture:_waterDepthTexture atIndex:FragmentInputIndexTexture1];
+	[renderEncoder setVertexBytes:quadVertices length:sizeof(quadVertices) atIndex:VertexInputIndexVertices];
+	[renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:sizeof(quadVertices)/sizeof(VertexPT)];
+	[renderEncoder popDebugGroup];
 	
 	[renderEncoder endEncoding];
 }

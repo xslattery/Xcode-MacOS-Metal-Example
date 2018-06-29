@@ -60,15 +60,40 @@ vertex RasterDataPT vertexShaderPT ( VertexInputPT in [[stage_in]], constant Vie
 	return result;
 }
 
-fragment FragOutPT fragmentShaderPT ( RasterDataPT input [[stage_in]], texture2d<half> colorTexture [[texture(FragmentInputIndexTexture)]] ) {
+fragment FragOutPT fragmentShaderPT ( RasterDataPT input [[stage_in]], texture2d<half> colorTexture [[texture(FragmentInputIndexTexture0)]] ) {
 	FragOutPT result;
 	
 	constexpr sampler textureSampler (mag_filter::linear, min_filter::linear);
+	
 	const half4 colorSample = colorTexture.sample(textureSampler, input.textureCoord);
 	result.color = float4(colorSample);
 	
 	if (colorSample.a < 0.01) result.depth = 1.0;
 	else result.depth = input.clipSpacePosition.z;
+	
+	return result;
+}
+
+//////////////////////////
+
+vertex RasterDataPT vertexShaderComposetPT ( uint vertexID [[vertex_id]], constant VertexPT *verts [[buffer(VertexInputIndexVertices)]], constant ViewProjectionMatrices *vp [[buffer(VertexInputIndexVP)]]  ) {
+	RasterDataPT result;
+	
+	result.clipSpacePosition = vp->projectionMatrix * vp->viewMatrix * float4(verts[vertexID].position, 1.0);
+	result.textureCoord = verts[vertexID].textureCoord;
+	
+	return result;
+}
+
+fragment FragOutPT fragmentShaderComposetPT ( RasterDataPT input [[stage_in]], texture2d<half> colorTexture [[texture(FragmentInputIndexTexture0)]], texture2d<float> depthTexture [[texture(FragmentInputIndexTexture1)]] ) {
+	FragOutPT result;
+	
+	constexpr sampler textureSampler (mag_filter::nearest, min_filter::nearest);
+	
+	const half4 colorSample = colorTexture.sample(textureSampler, input.textureCoord);
+	const float4 depthSample = depthTexture.sample(textureSampler, input.textureCoord);
+	result.color = float4(colorSample);
+	result.depth = depthSample.r;
 	
 	return result;
 }

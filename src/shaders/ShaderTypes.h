@@ -17,7 +17,8 @@ enum VertexInputIndex {
 };
 
 enum FragmentInputIndex {
-	FragmentInputIndexTexture = 0,
+	FragmentInputIndexTexture0 = 0,
+	FragmentInputIndexTexture1 = 1,
 };
 
 struct ViewProjectionMatrices {
