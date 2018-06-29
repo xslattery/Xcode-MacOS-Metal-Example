@@ -96,6 +96,11 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	simd::float2 _viewportSize;
 	ViewProjectionMatrices _viewProjectionMatrices;
 	
+	id<MTLTexture> _waterDepthTexture;
+	id<MTLTexture> _waterColorTexture;
+	MTLRenderPassDescriptor *_waterRenderPassDescriptor;
+	id<MTLRenderPipelineState> _waterRenderPipelineStatePT;
+	
 	Chunk *_chunk;
 }
 
@@ -113,9 +118,7 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	_nearPlane = 0.0;
 	_farPlane = 1000.0;
 	_viewportSize = {(float)size.width, (float)size.height};
-	_viewProjectionMatrices.projectionMatrix = orthographic_projection(-_viewportSize.x / 2.0f, _viewportSize.x / 2.0f,
-																	   0.0f, _viewportSize.y,
-																	   _nearPlane, _farPlane);
+	_viewProjectionMatrices.projectionMatrix = orthographic_projection(-_viewportSize.x / 2.0f, _viewportSize.x / 2.0f, 0.0f, _viewportSize.y, _nearPlane, _farPlane);
 	_viewProjectionMatrices.viewMatrix = translate(matrix_identity_float4x4, simd::float3{0, 0, 500});
 	
 	//////////////////////////////
@@ -195,6 +198,26 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	
 	//////////////////////////////
 	
+	MTLRenderPipelineDescriptor *waterPipelineStateDescriptorPT = [MTLRenderPipelineDescriptor new];
+	waterPipelineStateDescriptorPT.label = @"Water Textured Renderer Pipeline";
+	waterPipelineStateDescriptorPT.vertexDescriptor = vertexDescriptorPT;
+	waterPipelineStateDescriptorPT.vertexFunction = vertexFunctionPT;
+	waterPipelineStateDescriptorPT.fragmentFunction = fragmentFunctionPT;
+	waterPipelineStateDescriptorPT.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
+	waterPipelineStateDescriptorPT.colorAttachments[0].blendingEnabled = NO;
+	waterPipelineStateDescriptorPT.colorAttachments[0].rgbBlendOperation = MTLBlendOperationAdd;
+	waterPipelineStateDescriptorPT.colorAttachments[0].alphaBlendOperation = MTLBlendOperationAdd;
+	waterPipelineStateDescriptorPT.colorAttachments[0].sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
+	waterPipelineStateDescriptorPT.colorAttachments[0].sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
+	waterPipelineStateDescriptorPT.colorAttachments[0].destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+	waterPipelineStateDescriptorPT.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusBlendAlpha;
+	waterPipelineStateDescriptorPT.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
+	
+	_waterRenderPipelineStatePT = [_device newRenderPipelineStateWithDescriptor:waterPipelineStateDescriptorPT error:&error];
+	assert(_waterRenderPipelineStatePT);
+	
+	//////////////////////////////
+	
 	MTLDepthStencilDescriptor *depthStencilDescriptor = [MTLDepthStencilDescriptor new];
 	depthStencilDescriptor.depthCompareFunction = MTLCompareFunctionLess;
 	depthStencilDescriptor.depthWriteEnabled = YES;
@@ -228,6 +251,45 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	
 	//////////////////////////////
 	
+	// Create color texture for water pass:
+	MTLTextureDescriptor *waterColorTextureDescriptor =
+	[MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
+													   width:_viewportSize.x
+													  height:_viewportSize.y
+												   mipmapped:NO];
+	
+	waterColorTextureDescriptor.resourceOptions = MTLResourceStorageModePrivate;
+	waterColorTextureDescriptor.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
+	
+	_waterColorTexture = [_device newTextureWithDescriptor:waterColorTextureDescriptor];
+	_waterColorTexture.label = @"Water Color";
+	
+	// Create depth texture for water pass:
+	MTLTextureDescriptor *waterDepthTextureDescriptor =
+	[MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
+													   width:_viewportSize.x
+													  height:_viewportSize.y
+												   mipmapped:NO];
+	
+	waterDepthTextureDescriptor.resourceOptions = MTLResourceStorageModePrivate;
+	waterDepthTextureDescriptor.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
+	
+	_waterDepthTexture = [_device newTextureWithDescriptor:waterDepthTextureDescriptor];
+	_waterDepthTexture.label = @"Water Depth";
+	
+	// Create render pass descriptor to reuse for water pass:
+	_waterRenderPassDescriptor = [MTLRenderPassDescriptor new];
+	_waterRenderPassDescriptor.colorAttachments[0].texture = _waterColorTexture;
+	_waterRenderPassDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
+	_waterRenderPassDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
+	
+	_waterRenderPassDescriptor.depthAttachment.texture = _waterDepthTexture;
+	_waterRenderPassDescriptor.depthAttachment.loadAction = MTLLoadActionClear;
+	_waterRenderPassDescriptor.depthAttachment.storeAction = MTLStoreActionStore;
+	_waterRenderPassDescriptor.depthAttachment.clearDepth = 1.0;
+	
+	//////////////////////////////
+	
 	_chunk = [Chunk new];
 	[_chunk generateMeshWithDevice:_device];
 	
@@ -236,12 +298,57 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 
 - (void)resize:(CGSize)size {
 	_viewportSize = {(float)size.width, (float)size.height};
-	_viewProjectionMatrices.projectionMatrix = orthographic_projection(-_viewportSize.x / 2.0f, _viewportSize.x / 2.0f,
-																	   0.0f, _viewportSize.y,
-																	   _nearPlane, _farPlane);
+	_viewProjectionMatrices.projectionMatrix = orthographic_projection(-_viewportSize.x / 2.0f, _viewportSize.x / 2.0f, 0.0f, _viewportSize.y, _nearPlane, _farPlane);
+	
+	// Resize color texture for water pass:
+	MTLTextureDescriptor *waterColorTextureDescriptor =
+	[MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
+													   width:_viewportSize.x
+													  height:_viewportSize.y
+												   mipmapped:NO];
+	waterColorTextureDescriptor.resourceOptions = MTLResourceStorageModePrivate;
+	waterColorTextureDescriptor.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
+	_waterColorTexture = [_device newTextureWithDescriptor:waterColorTextureDescriptor];
+	_waterColorTexture.label = @"Water Color";
+	
+	// Resize depth texture for water pass:
+	MTLTextureDescriptor *waterDepthTextureDescriptor =
+	[MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
+													   width:_viewportSize.x
+													  height:_viewportSize.y
+												   mipmapped:NO];
+	waterDepthTextureDescriptor.resourceOptions = MTLResourceStorageModePrivate;
+	waterDepthTextureDescriptor.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
+	_waterDepthTexture = [_device newTextureWithDescriptor:waterDepthTextureDescriptor];
+	_waterDepthTexture.label = @"Water Depth";
+	
+	_waterRenderPassDescriptor.colorAttachments[0].texture = _waterColorTexture;
+	_waterRenderPassDescriptor.depthAttachment.texture = _waterDepthTexture;
 }
 
 - (void)renderWithCommandBuffer:(nonnull id<MTLCommandBuffer>)commandBuffer renderPassDescriptor:(nonnull MTLRenderPassDescriptor *)renderPassDescriptor {
+	id<MTLRenderCommandEncoder> waterRenderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:_waterRenderPassDescriptor];
+	
+	waterRenderEncoder.label = @"Water Pass";
+	
+	[waterRenderEncoder setViewport:(MTLViewport){0.0, 0.0, _viewportSize.x, _viewportSize.y, 0, 1.0 }];
+	[waterRenderEncoder setDepthStencilState:_depthStencilState];
+	[waterRenderEncoder setCullMode: MTLCullModeBack];
+	[waterRenderEncoder setFrontFacingWinding:MTLWindingClockwise];
+	
+	[waterRenderEncoder setRenderPipelineState:_waterRenderPipelineStatePT];
+	[waterRenderEncoder setVertexBytes:&_viewProjectionMatrices length:sizeof(ViewProjectionMatrices) atIndex:VertexInputIndexVP];
+	[waterRenderEncoder setFragmentTexture:_texture atIndex:FragmentInputIndexTexture];
+	
+	[_chunk renderWaterWithEncoder:waterRenderEncoder];
+	
+	[waterRenderEncoder endEncoding];
+	
+	/////////////////////////
+	
+	// TODO(Xavier): Move things so the Drawable is gotten here.
+	// Currently there is a warning about getting it too early.
+	
 	id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
 	renderEncoder.label = @"Render Encoder";
 	
@@ -250,13 +357,13 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	[renderEncoder setCullMode:MTLCullModeBack];
 	[renderEncoder setFrontFacingWinding:MTLWindingClockwise];
 	
-	[renderEncoder setRenderPipelineState:_renderPipelineStatePC];
-	[renderEncoder setVertexBytes:&_viewProjectionMatrices length:sizeof(ViewProjectionMatrices) atIndex:VertexInputIndexVP];
+//	[renderEncoder setRenderPipelineState:_renderPipelineStatePC];
+//	[renderEncoder setVertexBytes:&_viewProjectionMatrices length:sizeof(ViewProjectionMatrices) atIndex:VertexInputIndexVP];
 
-	[renderEncoder pushDebugGroup:@"Triangle Group Drawing"];
-	[renderEncoder setVertexBuffer:_vertexBuffer offset:0 atIndex:VertexInputIndexVertices];
-	[renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:sizeof(triangleVertices)/sizeof(VertexPC)];
-	[renderEncoder popDebugGroup];
+//	[renderEncoder pushDebugGroup:@"Triangle Group Drawing"];
+//	[renderEncoder setVertexBuffer:_vertexBuffer offset:0 atIndex:VertexInputIndexVertices];
+//	[renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:sizeof(triangleVertices)/sizeof(VertexPC)];
+//	[renderEncoder popDebugGroup];
 	
 	[renderEncoder setRenderPipelineState:_renderPipelineStatePT];
 	[renderEncoder setVertexBytes:&_viewProjectionMatrices length:sizeof(ViewProjectionMatrices) atIndex:VertexInputIndexVP];
@@ -268,8 +375,10 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 //	[renderEncoder popDebugGroup];
 
 	[renderEncoder pushDebugGroup:@"Chunk Drawing"];
-	[_chunk renderWithEncoder:renderEncoder];
+	[_chunk renderWallsWithEncoder:renderEncoder];
 	[renderEncoder popDebugGroup];
+	
+	// TODO(Xavier): Composit Water On Terrain:
 	
 	[renderEncoder endEncoding];
 }

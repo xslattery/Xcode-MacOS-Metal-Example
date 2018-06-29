@@ -47,38 +47,42 @@ static float generate_height_data ( float xx, float yy, float scale, int octaves
 	id<MTLBuffer> _vertexBuffer;
 	id<MTLBuffer> _indexBuffer;
 	NSUInteger indexCount;
+	
+	id<MTLBuffer> _waterVertexBuffer;
+	id<MTLBuffer> _waterIndexBuffer;
+	NSUInteger waterIndexCount;
 }
 
 - (void)generateMeshWithDevice:(nonnull id<MTLDevice>)device {
-	std::vector<VertexPT> vertexData;
-	std::vector<uint32_t> indexData;
-	
 	const simd::float2 xAxisDirection {-1, 18.0f/27.0f};
 	const simd::float2 zAxisDirection { 1, 18.0f/27.0f};
 	
 	const simd::float2 textureTopLeft {0, 1.0f/512*68};
 	const simd::float2 textureBottomRight {1.0f/512*54,	0.0f};
-	
+
+	std::vector<VertexPT> vertexData;
+	std::vector<uint32_t> indexData;
+
 	for (size_t y = 0; y < CHUNK_HEIGHT; ++y) {
 		for (size_t z = 0; z < CHUNK_WIDTH; ++z) {
 			for (size_t x = 0; x < CHUNK_LENGTH; ++x) {
 				if (generate_height_data(x, z, 200, 4, 0.5f, 2.5f, 1) * 8.0f > y) {
 					float xx = x, yy = y, zz = z;
-					
+
 					simd::float2 tileBottomMiddlePosition {0, 0};
 					float tileDepth = 0;
-					
+
 					tileBottomMiddlePosition = ((xx)*xAxisDirection + (zz)*zAxisDirection) * 27;
 					tileBottomMiddlePosition += simd::float2{ 0, 30 } * (yy);
 					tileDepth = (xx + zz) - yy*2;
-					
+
 					const uint32_t idxP = (uint32_t)vertexData.size();
 					uint32_t tempIndices [6] = {
 						idxP+0, idxP+1, idxP+2,
 						idxP+0, idxP+2, idxP+3
 					};
 					indexData.insert( indexData.end(), tempIndices, tempIndices+6 );
-					
+
 					VertexPT tempVerts [4] = {
 						{{-27.0f+tileBottomMiddlePosition.x,  0.0f+tileBottomMiddlePosition.y, tileDepth},	{textureTopLeft.x, textureBottomRight.y}},
 						{{-27.0f+tileBottomMiddlePosition.x, 68.0f+tileBottomMiddlePosition.y, tileDepth},	{textureTopLeft.x, textureTopLeft.y}},
@@ -90,15 +94,62 @@ static float generate_height_data ( float xx, float yy, float scale, int octaves
 			}
 		}
 	}
-	
+
 	_vertexBuffer = [device newBufferWithBytes:&vertexData[0] length:vertexData.size()*sizeof(VertexPT) options:MTLResourceStorageModeShared];
 	_indexBuffer = [device newBufferWithBytes:&indexData[0] length:indexData.size()*sizeof(uint32_t) options:MTLResourceStorageModeShared];
 	indexCount = indexData.size();
+	
+	const simd::float2 waterTextureTopLeft {1.0f/512*54*3, 1.0f/512*68*3};
+	const simd::float2 waterTextureBottomRight {1.0f/512*54*4, 1.0f/512*68*2};
+	
+	std::vector<VertexPT> waterVertexData;
+	std::vector<uint32_t> waterIndexData;
+	
+	for (size_t y = 0; y < CHUNK_HEIGHT; ++y) {
+		for (size_t z = 0; z < CHUNK_WIDTH; ++z) {
+			for (size_t x = 0; x < CHUNK_LENGTH; ++x) {
+				if (generate_height_data(x, z, 200, 4, 0.5f, 2.5f, 1) * 8.0f <= y) {
+					float xx = x, yy = y, zz = z;
+					
+					simd::float2 tileBottomMiddlePosition {0, 0};
+					float tileDepth = 0;
+					
+					tileBottomMiddlePosition = ((xx)*xAxisDirection + (zz)*zAxisDirection) * 27;
+					tileBottomMiddlePosition += simd::float2{ 0, 30 } * (yy);
+					tileDepth = (xx + zz) - yy*2;
+					
+					const uint32_t idxP = (uint32_t)waterVertexData.size();
+					uint32_t tempIndices [6] = {
+						idxP+0, idxP+1, idxP+2,
+						idxP+0, idxP+2, idxP+3
+					};
+					waterIndexData.insert( waterIndexData.end(), tempIndices, tempIndices+6 );
+					
+					VertexPT tempVerts [4] = {
+						{{-27.0f+tileBottomMiddlePosition.x,  0.0f+tileBottomMiddlePosition.y, tileDepth},	{waterTextureTopLeft.x, waterTextureBottomRight.y}},
+						{{-27.0f+tileBottomMiddlePosition.x, 68.0f+tileBottomMiddlePosition.y, tileDepth},	{waterTextureTopLeft.x, waterTextureTopLeft.y}},
+						{{ 27.0f+tileBottomMiddlePosition.x, 68.0f+tileBottomMiddlePosition.y, tileDepth},	{waterTextureBottomRight.x, waterTextureTopLeft.y}},
+						{{ 27.0f+tileBottomMiddlePosition.x,  0.0f+tileBottomMiddlePosition.y, tileDepth},	{waterTextureBottomRight.x, waterTextureBottomRight.y}},
+					};
+					waterVertexData.insert( waterVertexData.end(), tempVerts, tempVerts+4 );
+				}
+			}
+		}
+	}
+	
+	_waterVertexBuffer = [device newBufferWithBytes:&waterVertexData[0] length:waterVertexData.size()*sizeof(VertexPT) options:MTLResourceStorageModeShared];
+	_waterIndexBuffer = [device newBufferWithBytes:&waterIndexData[0] length:waterIndexData.size()*sizeof(uint32_t) options:MTLResourceStorageModeShared];
+	waterIndexCount = waterIndexData.size();
 }
 
-- (void)renderWithEncoder:(nonnull id<MTLRenderCommandEncoder>)commandEncoder {
+- (void)renderWallsWithEncoder:(nonnull id<MTLRenderCommandEncoder>)commandEncoder {
 	[commandEncoder setVertexBuffer:_vertexBuffer offset:0 atIndex:VertexInputIndexVertices];
 	[commandEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle indexCount:indexCount indexType:MTLIndexTypeUInt32 indexBuffer:_indexBuffer indexBufferOffset:0];
+}
+
+- (void)renderWaterWithEncoder:(nonnull id<MTLRenderCommandEncoder>)commandEncoder {
+	[commandEncoder setVertexBuffer:_waterVertexBuffer offset:0 atIndex:VertexInputIndexVertices];
+	[commandEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle indexCount:waterIndexCount indexType:MTLIndexTypeUInt32 indexBuffer:_waterIndexBuffer indexBufferOffset:0];
 }
 
 @end

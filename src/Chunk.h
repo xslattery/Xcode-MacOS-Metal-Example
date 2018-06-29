@@ -14,6 +14,7 @@
 
 - (void)generateMeshWithDevice:(nonnull id<MTLDevice>)device;
 
-- (void)renderWithEncoder:(nonnull id<MTLRenderCommandEncoder>)commandEncoder;
+- (void)renderWallsWithEncoder:(nonnull id<MTLRenderCommandEncoder>)commandEncoder;
+- (void)renderWaterWithEncoder:(nonnull id<MTLRenderCommandEncoder>)commandEncoder;
 
 @end
