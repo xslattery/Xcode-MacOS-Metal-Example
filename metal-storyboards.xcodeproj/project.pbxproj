@@ -16,6 +16,7 @@
 		253AB64420DE654B0061A2D3 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 253AB64220DE654B0061A2D3 /* Metal.framework */; };
 		253AB64720DE68450061A2D3 /* Renderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 253AB64620DE68450061A2D3 /* Renderer.mm */; };
 		253AB64C20DE70D90061A2D3 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 253AB64B20DE70D90061A2D3 /* Shaders.metal */; };
+		2569D21020E733C900078B41 /* TileMap2.png in Resources */ = {isa = PBXBuildFile; fileRef = 2569D20F20E733C900078B41 /* TileMap2.png */; };
 		25AF9C5E20DF9A660058C020 /* TileMap.png in Resources */ = {isa = PBXBuildFile; fileRef = 25AF9C5D20DF9A660058C020 /* TileMap.png */; };
 		25FCFAE020DF52CB00780DD8 /* Scene.mm in Sources */ = {isa = PBXBuildFile; fileRef = 25FCFADF20DF52CB00780DD8 /* Scene.mm */; };
 		25FCFAE320DF630C00780DD8 /* Chunk.mm in Sources */ = {isa = PBXBuildFile; fileRef = 25FCFAE220DF630C00780DD8 /* Chunk.mm */; };
@@ -39,6 +40,7 @@
 		253AB64620DE68450061A2D3 /* Renderer.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Renderer.mm; sourceTree = "<group>"; };
 		253AB64A20DE6E0F0061A2D3 /* ShaderTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShaderTypes.h; sourceTree = "<group>"; };
 		253AB64B20DE70D90061A2D3 /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
+		2569D20F20E733C900078B41 /* TileMap2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TileMap2.png; sourceTree = "<group>"; };
 		25AF9C5D20DF9A660058C020 /* TileMap.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TileMap.png; sourceTree = "<group>"; };
 		25AF9C6020DFA6070058C020 /* Perlin.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Perlin.hpp; sourceTree = "<group>"; };
 		25FCFADE20DF52CB00780DD8 /* Scene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Scene.h; sourceTree = "<group>"; };
@@ -141,6 +143,7 @@
 			isa = PBXGroup;
 			children = (
 				25AF9C5D20DF9A660058C020 /* TileMap.png */,
+				2569D20F20E733C900078B41 /* TileMap2.png */,
 			);
 			path = res;
 			sourceTree = "<group>";
@@ -203,6 +206,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				253AB63320DE61620061A2D3 /* Assets.xcassets in Resources */,
+				2569D21020E733C900078B41 /* TileMap2.png in Resources */,
 				25AF9C5E20DF9A660058C020 /* TileMap.png in Resources */,
 				253AB63620DE61620061A2D3 /* Main.storyboard in Resources */,
 			);

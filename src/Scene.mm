@@ -275,7 +275,7 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	
 	//////////////////////////////
 	
-	NSURL *imageFileLocation = [[NSBundle mainBundle] URLForResource:@"TileMap" withExtension:@"png"];
+	NSURL *imageFileLocation = [[NSBundle mainBundle] URLForResource:@"TileMap2" withExtension:@"png"];
 	int texWidth, texHeight, n;
 	stbi_set_flip_vertically_on_load(true);
 	uint8_t *bitmap = stbi_load([imageFileLocation.path UTF8String], &texWidth, &texHeight, &n, 4);
@@ -335,6 +335,7 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	//////////////////////////////
 	
 	_chunk = [Chunk new];
+	[_chunk generateData];
 	[_chunk generateMeshWithDevice:_device];
 	
 	return self;
@@ -381,6 +382,9 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	
 	// Draw Water:
 	[waterRenderEncoder pushDebugGroup:@"Chunk Water Drawing"];
+	// TODO(Xavier): If there is no water the program will hault because
+	// the Render Pipeline state has to render something.
+	// Fix this by first checking if the chunk contains any water.
 	[waterRenderEncoder setRenderPipelineState:_waterRenderPipelineStatePT];
 	[waterRenderEncoder setVertexBytes:&_viewProjectionMatrices length:sizeof(ViewProjectionMatrices) atIndex:VertexInputIndexVP];
 	[waterRenderEncoder setFragmentTexture:_texture atIndex:FragmentInputIndexTexture0];
@@ -416,6 +420,7 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	[renderEncoder setRenderPipelineState:_renderPipelineStatePT];
 	[renderEncoder setFragmentTexture:_texture atIndex:FragmentInputIndexTexture0];
 	[_chunk renderWallsWithEncoder:renderEncoder];
+	[_chunk renderFloorsWithEncoder:renderEncoder];
 	[renderEncoder popDebugGroup];
 	
 	// Composite Water On Terrain:

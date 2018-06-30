@@ -12,9 +12,12 @@
 
 @interface Chunk : NSObject
 
+- (void)generateData;
+
 - (void)generateMeshWithDevice:(nonnull id<MTLDevice>)device;
 
 - (void)renderWallsWithEncoder:(nonnull id<MTLRenderCommandEncoder>)commandEncoder;
+- (void)renderFloorsWithEncoder:(nonnull id<MTLRenderCommandEncoder>)commandEncoder;
 - (void)renderWaterWithEncoder:(nonnull id<MTLRenderCommandEncoder>)commandEncoder;
 
 @end
