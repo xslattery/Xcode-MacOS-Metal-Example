@@ -85,15 +85,23 @@ vertex RasterDataPT vertexShaderComposetPT ( uint vertexID [[vertex_id]], consta
 	return result;
 }
 
-fragment FragOutPT fragmentShaderComposetPT ( RasterDataPT input [[stage_in]], texture2d<half> colorTexture [[texture(FragmentInputIndexTexture0)]], texture2d<float> depthTexture [[texture(FragmentInputIndexTexture1)]] ) {
+fragment FragOutPT fragmentShaderComposetPT ( RasterDataPT input [[stage_in]], texture2d<half> colorTexture [[texture(FragmentInputIndexTexture0)]], texture2d<float> depthTexture [[texture(FragmentInputIndexTexture1)]], texture2d<float> oldDepthTexture [[texture(FragmentInputIndexTexture2)]] ) {
 	FragOutPT result;
 	
 	constexpr sampler textureSampler (mag_filter::nearest, min_filter::nearest);
-	
 	const half4 colorSample = colorTexture.sample(textureSampler, input.textureCoord);
 	const float4 depthSample = depthTexture.sample(textureSampler, input.textureCoord);
-	result.color = float4(colorSample);
+	
 	result.depth = depthSample.r;
+//	result.color = float4(colorSample);
+	
+	const float4 oldDepthSample = oldDepthTexture.sample(textureSampler, input.textureCoord);
+	float depthDifference = (oldDepthSample.r - depthSample.r);
+	if (oldDepthSample.r > 0.99) depthDifference = 0;
+	const float4 tintDark = float4(0.2, 0.7, 0.8, 1);
+	const float4 tintLight = float4(1, 1, 1, 1);
+	const float4 tint = mix(tintLight, tintDark, min(depthDifference / 0.05, 1.0));
+	result.color = float4(colorSample.x, colorSample.y, colorSample.z, colorSample.w) * tint;
 	
 	return result;
 }

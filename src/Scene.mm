@@ -430,6 +430,7 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	[renderEncoder setVertexBytes:&_waterOverlayViewProjectionMatrices length:sizeof(ViewProjectionMatrices) atIndex:VertexInputIndexVP];
 	[renderEncoder setFragmentTexture:_waterColorTexture atIndex:FragmentInputIndexTexture0];
 	[renderEncoder setFragmentTexture:_waterDepthTexture atIndex:FragmentInputIndexTexture1];
+	[renderEncoder setFragmentTexture:renderPassDescriptor.depthAttachment.texture atIndex:FragmentInputIndexTexture2];
 	[renderEncoder setVertexBytes:quadVertices length:sizeof(quadVertices) atIndex:VertexInputIndexVertices];
 	[renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:sizeof(quadVertices)/sizeof(VertexPT)];
 	[renderEncoder popDebugGroup];

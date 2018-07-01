@@ -15,8 +15,8 @@
 #define CHUNK_WIDTH  16
 #define CHUNK_HEIGHT 16
 
-static const simd::float2 xAxisDirection {-1, 18.0f/27.0f};
-static const simd::float2 zAxisDirection { 1, 18.0f/27.0f};
+static const simd::float2 xAxisDirection { 1, 18.0f/27.0f};
+static const simd::float2 zAxisDirection {-1, 18.0f/27.0f};
 
 static float generate_height_data ( float xx, float yy, float scale, int octaves, float persistance, float lacunarity, bool power ) {
 	if ( scale <= 0 ) scale = 0.0001f;
@@ -111,10 +111,10 @@ struct Floor {
 }
 
 - (void)generateWallMeshWithDevice:(nonnull id<MTLDevice>)device {
-//	const simd::float2 textureTopLeft {0, 1.0f/512*68};
-//	const simd::float2 textureBottomRight {1.0f/512*54,	0.0f};
-	const simd::float2 textureTopLeft {1.0f/512*54*4, 1.0f/512*68*3};
-	const simd::float2 textureBottomRight {1.0f/512*54*5, 1.0f/512*68*2};
+	const simd::float2 textureTopLeft {0, 1.0f/512*68};
+	const simd::float2 textureBottomRight {1.0f/512*54,	0.0f};
+//	const simd::float2 textureTopLeft {1.0f/512*54*4, 1.0f/512*68*3};
+//	const simd::float2 textureBottomRight {1.0f/512*54*5, 1.0f/512*68*2};
 	
 	std::vector<VertexPT> vertexData;
 	std::vector<uint32_t> indexData;
