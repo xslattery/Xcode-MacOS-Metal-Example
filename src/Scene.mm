@@ -12,24 +12,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #import <stb_image.h>
 
-static const VertexPC triangleVertices[] = {
-	// 3D Positions:        RGBA Colors:
-	{ {   0,  576, 32+1 }, { 0, 0, 0, 1 } },
-	{ {-432,  288, 16+1 }, { 0, 0, 0, 1 } },
-	{ {   0, 1056,  0+1 }, { 0, 0, 0, 1 } },
-	
-	{ {-432,  288, 16+1 }, { 0, 0, 0, 1 } },
-	{ {-432,  768,-16+1 }, { 0, 0, 0, 1 } },
-	{ {   0, 1056,  0+1 }, { 0, 0, 0, 1 } },
-	
-	{ {   0,  576, 32+1 }, { 0, 0, 0, 1 } },
-	{ {   0, 1056,  0+1 }, { 0, 0, 0, 1 } },
-	{ { 432,  288, 16+1 }, { 0, 0, 0, 1 } },
-	
-	{ { 432,  288, 16+1 }, { 0, 0, 0, 1 } },
-	{ {   0, 1056,  0+1 }, { 0, 0, 0, 1 } },
-	{ { 432,  768,-16+1 }, { 0, 0, 0, 1 } },
-};
+static const simd::float2 xAxisDirection { 1, 18.0f/27.0f};
+static const simd::float2 zAxisDirection {-1, 18.0f/27.0f};
 
 static const VertexPT quadVertices[] = {
 	// 3D Pos:       Tex:
@@ -304,6 +288,62 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	
 	//////////////////////////////
 	
+	#define WORLD_X 16
+	#define WORLD_Z 16
+	#define WORLD_Y 16
+	
+	int xx = 0, zz = WORLD_Z, yy = 0;
+	simd::float2 neg_x_y_0 = ((xx)*xAxisDirection + (zz)*zAxisDirection) * 27;
+	neg_x_y_0 += simd::float2{ 0, 30 } * (yy);
+	float neg_x_y_0_depth = (xx + zz) - yy*2;
+	
+	xx = WORLD_X, zz = WORLD_Z, yy = 0;
+	simd::float2 mid_x_y_1 = ((xx)*xAxisDirection + (zz)*zAxisDirection) * 27;
+	mid_x_y_1 += simd::float2{ 0, 30 } * (yy);
+	float mid_x_y_1_depth = (xx + zz) - yy*2;
+	
+	xx = 0, zz = WORLD_Z, yy = WORLD_Y;
+	simd::float2 mid_x_y_2 = ((xx)*xAxisDirection + (zz)*zAxisDirection) * 27;
+	mid_x_y_2 += simd::float2{ 0, 30 } * (yy);
+	float mid_x_y_2_depth = (xx + zz) - yy*2;
+	
+	xx = WORLD_X, zz = WORLD_Z, yy = WORLD_Y;
+	simd::float2 mid_x_y_3 = ((xx)*xAxisDirection + (zz)*zAxisDirection) * 27;
+	mid_x_y_3 += simd::float2{ 0, 30 } * (yy);
+	float mid_x_y_3_depth = (xx + zz) - yy*2;
+	
+	const float neg_x = neg_x_y_0.x;
+	const float mid_x = mid_x_y_1.x;
+	const float pos_x = -neg_x_y_0.x;
+	
+	const float y_0 = neg_x_y_0.y;
+	const float y_1 = mid_x_y_1.y;
+	const float y_2 = mid_x_y_2.y;
+	const float y_3 = mid_x_y_3.y;
+	
+	const float d_0 = mid_x_y_2_depth + 1;
+	const float d_1 = mid_x_y_3_depth + 1;
+	const float d_2 = neg_x_y_0_depth + 1;
+	const float d_3 = mid_x_y_1_depth + 1;
+	
+	const VertexPC triangleVertices[] = {
+		// 3D Positions:        RGBA Colors:
+		{ { mid_x, y_1, d_3 }, { 0, 0, 0, 1 } },
+		{ { neg_x, y_0, d_2 }, { 0, 0, 0, 1 } },
+		{ { mid_x, y_3, d_1 }, { 0, 0, 0, 1 } },
+		
+		{ { neg_x, y_0, d_2 }, { 0, 0, 0, 1 } },
+		{ { neg_x, y_2, d_0 }, { 0, 0, 0, 1 } },
+		{ { mid_x, y_3, d_1 }, { 0, 0, 0, 1 } },
+		
+		{ { mid_x, y_1, d_3 }, { 0, 0, 0, 1 } },
+		{ { mid_x, y_3, d_1 }, { 0, 0, 0, 1 } },
+		{ { pos_x, y_0, d_2 }, { 0, 0, 0, 1 } },
+		
+		{ { pos_x, y_0, d_2 }, { 0, 0, 0, 1 } },
+		{ { mid_x, y_3, d_1 }, { 0, 0, 0, 1 } },
+		{ { pos_x, y_2, d_0 }, { 0, 0, 0, 1 } },
+	};
 	
 	_vertexBuffer = [_device newBufferWithBytes:triangleVertices length:sizeof(triangleVertices) options:MTLResourceStorageModeShared];
 	_vertexBuffer.label = @"Triangle Vertex Buffer";
@@ -511,7 +551,7 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	[chunkRenderEncoder pushDebugGroup:@"Triangle Group Drawing"];
 	[chunkRenderEncoder setRenderPipelineState:_renderPipelineStatePC];
 	[chunkRenderEncoder setVertexBuffer:_vertexBuffer offset:0 atIndex:VertexInputIndexVertices];
-	[chunkRenderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:sizeof(triangleVertices)/sizeof(VertexPC)];
+	[chunkRenderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:12];
 	[chunkRenderEncoder popDebugGroup];
 	
 	// Draw Chunk:

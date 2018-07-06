@@ -121,7 +121,7 @@ fragment FragOutPT fragmentShaderWaterComposetPT ( RasterDataPT input [[stage_in
 		result.color = float4(0, 0, 0, 0);
 		result.depth = chunkDepth;
 	} else {
-		constexpr float4 tintDark = float4(0.2, 0.7, 0.8, 1);
+		constexpr float4 tintDark = float4(0.2, 0.6, 0.7, 1);
 		constexpr float4 tintLight = float4(1, 1, 1, 1);
 		
 		const float depthDifference = (chunkDepthSample.r - waterDepthSample.r);

@@ -106,12 +106,12 @@ struct Floor {
 
 - (void)generateMeshWithDevice:(nonnull id<MTLDevice>)device {
 	
-	int xx = 0, zz = 16, yy = 16;
-	simd::float2 tileBottomMiddlePosition = ((xx)*xAxisDirection + (zz)*zAxisDirection) * 27;
-	tileBottomMiddlePosition += simd::float2{ 0, 30 } * (yy);
-	float tileDepth = (xx + zz) - yy*2;
-	
-	NSLog(@"%f, %f, %f", tileBottomMiddlePosition.x, tileBottomMiddlePosition.y, tileDepth);
+//	int xx = 0, zz = 16, yy = 16;
+//	simd::float2 tileBottomMiddlePosition = ((xx)*xAxisDirection + (zz)*zAxisDirection) * 27;
+//	tileBottomMiddlePosition += simd::float2{ 0, 30 } * (yy);
+//	float tileDepth = (xx + zz) - yy*2;
+//
+//	NSLog(@"%f, %f, %f", tileBottomMiddlePosition.x, tileBottomMiddlePosition.y, tileDepth);
 	
 	[self generateWallMeshWithDevice:device];
 	[self generateFloorMeshWithDevice:device];

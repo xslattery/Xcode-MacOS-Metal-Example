@@ -52,7 +52,7 @@
 	// NOTE(Xavier): To have a fixed drawable resolution that will scale with the view,
 	// set the following to prevent auto rezise and choose the desired size.
 	// _view.autoResizeDrawable = false;
-	// _view.drawableSize = {240, 150};
+	// _view.drawableSize = {1920, 1200};
 	
 	_scene = [[Scene alloc] initWithDevice:_view.device size:_view.drawableSize];
 	_renderer = [[Renderer alloc] initWithDevice:_view.device size:_view.drawableSize];
