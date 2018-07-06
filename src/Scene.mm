@@ -14,21 +14,21 @@
 
 static const VertexPC triangleVertices[] = {
 	// 3D Positions:        RGBA Colors:
-//	{ {  0,   -400, 0.9 }, { 1, 0, 0, 1 } },
-//	{ { -640,  100, 0.9 }, { 0, 1, 0, 1 } },
-//	{ {  640,  100, 0.9 }, { 0, 0, 1, 1 } },
-//
-//	{ {  250, -250, 0.5 }, { 1, 0, 0, 1 } },
-//	{ { -250, -250, 0.5 }, { 0, 1, 0, 1 } },
-//	{ { -250,  250, 0.5 }, { 0, 0, 1, 1 } },
+	{ {   0,  576, 32+1 }, { 0, 0, 0, 1 } },
+	{ {-432,  288, 16+1 }, { 0, 0, 0, 1 } },
+	{ {   0, 1056,  0+1 }, { 0, 0, 0, 1 } },
 	
-//	{ {  300, -200, 0.6 }, { 1, 0, 0, 1 } },
-//	{ { -200, -200, 0.6 }, { 0, 1, 0, 1 } },
-//	{ { -200,  300, 0.6 }, { 0, 0, 1, 1 } },
+	{ {-432,  288, 16+1 }, { 0, 0, 0, 1 } },
+	{ {-432,  768,-16+1 }, { 0, 0, 0, 1 } },
+	{ {   0, 1056,  0+1 }, { 0, 0, 0, 1 } },
 	
-	{ {   0,  576, 32 }, { 1, 1, 1, 1 } },
-	{ {-432,  288, 16 }, { 1, 1, 1, 1 } },
-	{ {   0, 1056,  0 }, { 1, 1, 1, 1 } },
+	{ {   0,  576, 32+1 }, { 0, 0, 0, 1 } },
+	{ {   0, 1056,  0+1 }, { 0, 0, 0, 1 } },
+	{ { 432,  288, 16+1 }, { 0, 0, 0, 1 } },
+	
+	{ { 432,  288, 16+1 }, { 0, 0, 0, 1 } },
+	{ {   0, 1056,  0+1 }, { 0, 0, 0, 1 } },
+	{ { 432,  768,-16+1 }, { 0, 0, 0, 1 } },
 };
 
 static const VertexPT quadVertices[] = {
@@ -108,7 +108,7 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	id<MTLTexture> _waterColorTexture;
 	MTLRenderPassDescriptor *_waterRenderPassDescriptor;
 	id<MTLRenderPipelineState> _waterRenderPipelineStatePT;
-	id<MTLDepthStencilState> _waterOverlayDepthStencilState;
+	id<MTLDepthStencilState> _compositOverlayDepthStencilState;
 
 	id<MTLTexture> _chunkDepthTexture;
 	id<MTLTexture> _chunkColorTexture;
@@ -116,8 +116,9 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	id<MTLRenderPipelineState> _chunkRenderPipelineStatePT;
 	id<MTLDepthStencilState> _chunkOverlayDepthStencilState;
 	
-	id<MTLRenderPipelineState> _renderPipelineStatCompositePT;
-	ViewProjectionMatrices _waterOverlayViewProjectionMatrices;
+	id<MTLRenderPipelineState> _chunkRenderPipelineStateCompositePT;
+	id<MTLRenderPipelineState> _waterRenderPipelineStateCompositePT;
+	ViewProjectionMatrices _compositOverlayViewProjectionMatrices;
 	
 	Chunk *_chunk;
 }
@@ -139,8 +140,8 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	_viewProjectionMatrices.projectionMatrix = orthographic_projection(-_viewportSize.x / 2.0f, _viewportSize.x / 2.0f, 0.0f, _viewportSize.y, _nearPlane, _farPlane);
 	_viewProjectionMatrices.viewMatrix = translate(matrix_identity_float4x4, simd::float3{0, 0, 500});
 	
-	_waterOverlayViewProjectionMatrices.projectionMatrix = orthographic_projection(-1.0, 1.0, -1.0, 1.0, _nearPlane, _farPlane);
-	_waterOverlayViewProjectionMatrices.viewMatrix = translate(matrix_identity_float4x4, simd::float3{0, 0, 500});
+	_compositOverlayViewProjectionMatrices.projectionMatrix = orthographic_projection(-1.0, 1.0, -1.0, 1.0, _nearPlane, _farPlane);
+	_compositOverlayViewProjectionMatrices.viewMatrix = translate(matrix_identity_float4x4, simd::float3{0, 0, 500});
 	
 	//////////////////////////////
 	
@@ -240,27 +241,50 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	//////////////////////////////
 	
 	id<MTLFunction> vertexFunctionComposetPT = [_defaultLibrary newFunctionWithName:@"vertexShaderComposetPT"];
-	id<MTLFunction> fragmentFunctionComposetPT = [_defaultLibrary newFunctionWithName:@"fragmentShaderComposetPT"];
+	id<MTLFunction> fragmentFunctionChunkComposetPT = [_defaultLibrary newFunctionWithName:@"fragmentShaderChunkComposetPT"];
 	assert(vertexFunctionComposetPT);
-	assert(fragmentFunctionComposetPT);
+	assert(fragmentFunctionChunkComposetPT);
 	
-	MTLRenderPipelineDescriptor *pipelineStateDescriptorCompositePT = [MTLRenderPipelineDescriptor new];
-	pipelineStateDescriptorCompositePT.label = @"Water Overlay Renderer Pipeline";
-	pipelineStateDescriptorCompositePT.vertexFunction = vertexFunctionComposetPT;
-	pipelineStateDescriptorCompositePT.fragmentFunction = fragmentFunctionComposetPT;
-	pipelineStateDescriptorCompositePT.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
-	pipelineStateDescriptorCompositePT.colorAttachments[0].blendingEnabled = YES;
-	pipelineStateDescriptorCompositePT.colorAttachments[0].rgbBlendOperation = MTLBlendOperationAdd;
-	pipelineStateDescriptorCompositePT.colorAttachments[0].alphaBlendOperation = MTLBlendOperationAdd;
-	pipelineStateDescriptorCompositePT.colorAttachments[0].sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
-	pipelineStateDescriptorCompositePT.colorAttachments[0].sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
-	pipelineStateDescriptorCompositePT.colorAttachments[0].destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
-	pipelineStateDescriptorCompositePT.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusBlendAlpha;
-	pipelineStateDescriptorCompositePT.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
+	MTLRenderPipelineDescriptor *pipelineStateDescriptorChunkCompositePT = [MTLRenderPipelineDescriptor new];
+	pipelineStateDescriptorChunkCompositePT.label = @"Water Overlay Renderer Pipeline";
+	pipelineStateDescriptorChunkCompositePT.vertexFunction = vertexFunctionComposetPT;
+	pipelineStateDescriptorChunkCompositePT.fragmentFunction = fragmentFunctionChunkComposetPT;
+	pipelineStateDescriptorChunkCompositePT.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
+	pipelineStateDescriptorChunkCompositePT.colorAttachments[0].blendingEnabled = YES;
+	pipelineStateDescriptorChunkCompositePT.colorAttachments[0].rgbBlendOperation = MTLBlendOperationAdd;
+	pipelineStateDescriptorChunkCompositePT.colorAttachments[0].alphaBlendOperation = MTLBlendOperationAdd;
+	pipelineStateDescriptorChunkCompositePT.colorAttachments[0].sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
+	pipelineStateDescriptorChunkCompositePT.colorAttachments[0].sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
+	pipelineStateDescriptorChunkCompositePT.colorAttachments[0].destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+	pipelineStateDescriptorChunkCompositePT.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusBlendAlpha;
+	pipelineStateDescriptorChunkCompositePT.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
 	
-	_renderPipelineStatCompositePT = [_device newRenderPipelineStateWithDescriptor:pipelineStateDescriptorCompositePT error:&error];
-	if (!_renderPipelineStatCompositePT) NSLog(@"%@", error);
-	assert(_renderPipelineStatCompositePT);
+	_chunkRenderPipelineStateCompositePT = [_device newRenderPipelineStateWithDescriptor:pipelineStateDescriptorChunkCompositePT error:&error];
+	if (!_chunkRenderPipelineStateCompositePT) NSLog(@"%@", error);
+	assert(_chunkRenderPipelineStateCompositePT);
+	
+	//////////////////////////////
+	
+	id<MTLFunction> fragmentFunctionWaterComposetPT = [_defaultLibrary newFunctionWithName:@"fragmentShaderWaterComposetPT"];
+	assert(fragmentFunctionWaterComposetPT);
+	
+	MTLRenderPipelineDescriptor *pipelineStateDescriptorWaterCompositePT = [MTLRenderPipelineDescriptor new];
+	pipelineStateDescriptorWaterCompositePT.label = @"Water Overlay Renderer Pipeline";
+	pipelineStateDescriptorWaterCompositePT.vertexFunction = vertexFunctionComposetPT;
+	pipelineStateDescriptorWaterCompositePT.fragmentFunction = fragmentFunctionWaterComposetPT;
+	pipelineStateDescriptorWaterCompositePT.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
+	pipelineStateDescriptorWaterCompositePT.colorAttachments[0].blendingEnabled = YES;
+	pipelineStateDescriptorWaterCompositePT.colorAttachments[0].rgbBlendOperation = MTLBlendOperationAdd;
+	pipelineStateDescriptorWaterCompositePT.colorAttachments[0].alphaBlendOperation = MTLBlendOperationAdd;
+	pipelineStateDescriptorWaterCompositePT.colorAttachments[0].sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
+	pipelineStateDescriptorWaterCompositePT.colorAttachments[0].sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
+	pipelineStateDescriptorWaterCompositePT.colorAttachments[0].destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+	pipelineStateDescriptorWaterCompositePT.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusBlendAlpha;
+	pipelineStateDescriptorWaterCompositePT.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
+	
+	_waterRenderPipelineStateCompositePT = [_device newRenderPipelineStateWithDescriptor:pipelineStateDescriptorWaterCompositePT error:&error];
+	if (!_waterRenderPipelineStateCompositePT) NSLog(@"%@", error);
+	assert(_waterRenderPipelineStateCompositePT);
 	
 	//////////////////////////////
 	
@@ -276,7 +300,7 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	waterOverlayDepthStencilDescriptor.depthCompareFunction = MTLCompareFunctionAlways;
 	waterOverlayDepthStencilDescriptor.depthWriteEnabled = YES;
 	
-	_waterOverlayDepthStencilState = [_device newDepthStencilStateWithDescriptor:depthStencilDescriptor];
+	_compositOverlayDepthStencilState = [_device newDepthStencilStateWithDescriptor:depthStencilDescriptor];
 	
 	//////////////////////////////
 	
@@ -515,11 +539,22 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	// TODO(Xavier): The special depth coloring of the composit may not be working because of the drawable texture.
 	// try rendering the terrain to another texture then combining the two in the composit stage.
 	
+	// Composit Terrain:
+	[renderEncoder pushDebugGroup:@"Chunk Composite"];
+	[renderEncoder setRenderPipelineState:_chunkRenderPipelineStateCompositePT];
+	[renderEncoder setDepthStencilState:_compositOverlayDepthStencilState];
+	[renderEncoder setVertexBytes:&_compositOverlayViewProjectionMatrices length:sizeof(ViewProjectionMatrices) atIndex:VertexInputIndexVP];
+	[renderEncoder setFragmentTexture:_chunkColorTexture atIndex:FragmentInputIndexTexture0];
+	[renderEncoder setFragmentTexture:_chunkDepthTexture atIndex:FragmentInputIndexTexture1];
+	[renderEncoder setVertexBytes:quadVertices length:sizeof(quadVertices) atIndex:VertexInputIndexVertices];
+	[renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:sizeof(quadVertices)/sizeof(VertexPT)];
+	[renderEncoder popDebugGroup];
+	
 	// Composite Water On Terrain:
-	[renderEncoder pushDebugGroup:@"Chunk Water Composite"];
-	[renderEncoder setRenderPipelineState:_renderPipelineStatCompositePT];
-	[renderEncoder setDepthStencilState:_waterOverlayDepthStencilState];
-	[renderEncoder setVertexBytes:&_waterOverlayViewProjectionMatrices length:sizeof(ViewProjectionMatrices) atIndex:VertexInputIndexVP];
+	[renderEncoder pushDebugGroup:@"Water Composite"];
+	[renderEncoder setRenderPipelineState:_waterRenderPipelineStateCompositePT];
+	[renderEncoder setDepthStencilState:_compositOverlayDepthStencilState];
+	[renderEncoder setVertexBytes:&_compositOverlayViewProjectionMatrices length:sizeof(ViewProjectionMatrices) atIndex:VertexInputIndexVP];
 	[renderEncoder setFragmentTexture:_waterColorTexture atIndex:FragmentInputIndexTexture0];
 	[renderEncoder setFragmentTexture:_waterDepthTexture atIndex:FragmentInputIndexTexture1];
 	[renderEncoder setFragmentTexture:_chunkColorTexture atIndex:FragmentInputIndexTexture2];

@@ -85,7 +85,24 @@ vertex RasterDataPT vertexShaderComposetPT ( uint vertexID [[vertex_id]], consta
 	return result;
 }
 
-fragment FragOutPT fragmentShaderComposetPT ( RasterDataPT input [[stage_in]], texture2d<half> waterColorTexture [[texture(FragmentInputIndexTexture0)]], texture2d<float> waterDepthTexture [[texture(FragmentInputIndexTexture1)]], texture2d<half> chunkColorTexture [[texture(FragmentInputIndexTexture2)]] , texture2d<float> chunkDepthTexture [[texture(FragmentInputIndexTexture3)]] ) {
+fragment FragOutPT fragmentShaderChunkComposetPT ( RasterDataPT input [[stage_in]], texture2d<half> chunkColorTexture [[texture(FragmentInputIndexTexture0)]], texture2d<float> chunkDepthTexture [[texture(FragmentInputIndexTexture1)]] ) {
+	FragOutPT result;
+	
+	constexpr sampler textureSampler (mag_filter::nearest, min_filter::nearest);
+	const half4 chunkColorSample = chunkColorTexture.sample(textureSampler, input.textureCoord);
+	const float4 chunkDepthSample = chunkDepthTexture.sample(textureSampler, input.textureCoord);
+	
+	const float4 chunkColor = float4(chunkColorSample.r, chunkColorSample.g, chunkColorSample.b, chunkColorSample.a);
+	const float chunkDepth = chunkDepthSample.r;
+	
+	result.color = chunkColor;
+	result.depth = chunkDepth;
+
+	return result;
+}
+
+
+fragment FragOutPT fragmentShaderWaterComposetPT ( RasterDataPT input [[stage_in]], texture2d<half> waterColorTexture [[texture(FragmentInputIndexTexture0)]], texture2d<float> waterDepthTexture [[texture(FragmentInputIndexTexture1)]], texture2d<half> chunkColorTexture [[texture(FragmentInputIndexTexture2)]] , texture2d<float> chunkDepthTexture [[texture(FragmentInputIndexTexture3)]] ) {
 	FragOutPT result;
 	
 	constexpr sampler textureSampler (mag_filter::nearest, min_filter::nearest);
@@ -98,20 +115,20 @@ fragment FragOutPT fragmentShaderComposetPT ( RasterDataPT input [[stage_in]], t
 	const float chunkDepth = chunkDepthSample.r;
 	
 	const float4 waterColor = float4(waterColorSample.r, waterColorSample.g, waterColorSample.b, waterColorSample.a);
-	const float4 chunkColor = float4(chunkColorSample.r, chunkColorSample.g, chunkColorSample.b, chunkColorSample.a);
+//	const float4 chunkColor = float4(chunkColorSample.r, chunkColorSample.g, chunkColorSample.b, chunkColorSample.a);
 	
 	if (chunkDepth < waterDepth) {
-		result.color = chunkColor;
+		result.color = float4(0, 0, 0, 0);
 		result.depth = chunkDepth;
 	} else {
-//		constexpr float4 tintDark = float4(0.2, 0.7, 0.8, 1);
-//		constexpr float4 tintLight = float4(1, 1, 1, 1);
+		constexpr float4 tintDark = float4(0.2, 0.7, 0.8, 1);
+		constexpr float4 tintLight = float4(1, 1, 1, 1);
 		
-//		const float depthDifference = (chunkDepthSample.r - waterDepthSample.r);
-//		float mixValue = 1.0f * (depthDifference / 0.05f);
-//		const float4 tint = mix(tintLight, tintDark, mixValue);
+		const float depthDifference = (chunkDepthSample.r - waterDepthSample.r);
+		float mixValue = 1.0f * (depthDifference / 0.05f);
+		const float4 tint = mix(tintLight, tintDark, mixValue);
 		
-		float4 newColor = waterColor + chunkColor * (1.0 - waterColor.a);
+		float4 newColor = waterColor * tint;
 		
 		result.color = newColor;
 		result.depth = waterDepth;
