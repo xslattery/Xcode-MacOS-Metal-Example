@@ -14,17 +14,21 @@
 
 static const VertexPC triangleVertices[] = {
 	// 3D Positions:        RGBA Colors:
-	{ {  0,   -400, 0.9 }, { 1, 0, 0, 1 } },
-	{ { -640,  100, 0.9 }, { 0, 1, 0, 1 } },
-	{ {  640,  100, 0.9 }, { 0, 0, 1, 1 } },
+//	{ {  0,   -400, 0.9 }, { 1, 0, 0, 1 } },
+//	{ { -640,  100, 0.9 }, { 0, 1, 0, 1 } },
+//	{ {  640,  100, 0.9 }, { 0, 0, 1, 1 } },
+//
+//	{ {  250, -250, 0.5 }, { 1, 0, 0, 1 } },
+//	{ { -250, -250, 0.5 }, { 0, 1, 0, 1 } },
+//	{ { -250,  250, 0.5 }, { 0, 0, 1, 1 } },
 	
-	{ {  250, -250, 0.5 }, { 1, 0, 0, 1 } },
-	{ { -250, -250, 0.5 }, { 0, 1, 0, 1 } },
-	{ { -250,  250, 0.5 }, { 0, 0, 1, 1 } },
+//	{ {  300, -200, 0.6 }, { 1, 0, 0, 1 } },
+//	{ { -200, -200, 0.6 }, { 0, 1, 0, 1 } },
+//	{ { -200,  300, 0.6 }, { 0, 0, 1, 1 } },
 	
-	{ {  300, -200, 0.6 }, { 1, 0, 0, 1 } },
-	{ { -200, -200, 0.6 }, { 0, 1, 0, 1 } },
-	{ { -200,  300, 0.6 }, { 0, 0, 1, 1 } },
+	{ {   0,  576, 32 }, { 1, 1, 1, 1 } },
+	{ {-432,  288, 16 }, { 1, 1, 1, 1 } },
+	{ {   0, 1056,  0 }, { 1, 1, 1, 1 } },
 };
 
 static const VertexPT quadVertices[] = {
@@ -104,8 +108,15 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	id<MTLTexture> _waterColorTexture;
 	MTLRenderPassDescriptor *_waterRenderPassDescriptor;
 	id<MTLRenderPipelineState> _waterRenderPipelineStatePT;
-	id<MTLRenderPipelineState> _renderPipelineStatCompositePT;
 	id<MTLDepthStencilState> _waterOverlayDepthStencilState;
+
+	id<MTLTexture> _chunkDepthTexture;
+	id<MTLTexture> _chunkColorTexture;
+	MTLRenderPassDescriptor *_chunkRenderPassDescriptor;
+	id<MTLRenderPipelineState> _chunkRenderPipelineStatePT;
+	id<MTLDepthStencilState> _chunkOverlayDepthStencilState;
+	
+	id<MTLRenderPipelineState> _renderPipelineStatCompositePT;
 	ViewProjectionMatrices _waterOverlayViewProjectionMatrices;
 	
 	Chunk *_chunk;
@@ -334,6 +345,46 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	
 	//////////////////////////////
 	
+	// Create color texture for chunk pass:
+	MTLTextureDescriptor *chunkColorTextureDescriptor =
+	[MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
+													   width:_viewportSize.x
+													  height:_viewportSize.y
+												   mipmapped:NO];
+	
+	chunkColorTextureDescriptor.resourceOptions = MTLResourceStorageModePrivate;
+	chunkColorTextureDescriptor.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
+	
+	_chunkColorTexture = [_device newTextureWithDescriptor:chunkColorTextureDescriptor];
+	_chunkColorTexture.label = @"chunk Color";
+	
+	// Create depth texture for chunk pass:
+	MTLTextureDescriptor *chunkDepthTextureDescriptor =
+	[MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
+													   width:_viewportSize.x
+													  height:_viewportSize.y
+												   mipmapped:NO];
+	
+	chunkDepthTextureDescriptor.resourceOptions = MTLResourceStorageModePrivate;
+	chunkDepthTextureDescriptor.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
+	
+	_chunkDepthTexture = [_device newTextureWithDescriptor:chunkDepthTextureDescriptor];
+	_chunkDepthTexture.label = @"chunk Depth";
+	
+	// Create render pass descriptor to reuse for chunk pass:
+	_chunkRenderPassDescriptor = [MTLRenderPassDescriptor new];
+	_chunkRenderPassDescriptor.colorAttachments[0].texture = _chunkColorTexture;
+	_chunkRenderPassDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
+	_chunkRenderPassDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
+//	_chunkRenderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor{0, 0, 0, 0};
+	
+	_chunkRenderPassDescriptor.depthAttachment.texture = _chunkDepthTexture;
+	_chunkRenderPassDescriptor.depthAttachment.loadAction = MTLLoadActionClear;
+	_chunkRenderPassDescriptor.depthAttachment.storeAction = MTLStoreActionStore;
+	_chunkRenderPassDescriptor.depthAttachment.clearDepth = 1.0;
+	
+	//////////////////////////////
+	
 	_chunk = [Chunk new];
 	[_chunk generateData];
 	[_chunk generateMeshWithDevice:_device];
@@ -369,6 +420,33 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	
 	_waterRenderPassDescriptor.colorAttachments[0].texture = _waterColorTexture;
 	_waterRenderPassDescriptor.depthAttachment.texture = _waterDepthTexture;
+
+	/////////////////////////
+
+	// Resize color texture for chunk pass:
+	MTLTextureDescriptor *chunkColorTextureDescriptor =
+	[MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
+													   width:_viewportSize.x
+													  height:_viewportSize.y
+												   mipmapped:NO];
+	chunkColorTextureDescriptor.resourceOptions = MTLResourceStorageModePrivate;
+	chunkColorTextureDescriptor.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
+	_chunkColorTexture = [_device newTextureWithDescriptor:chunkColorTextureDescriptor];
+	_chunkColorTexture.label = @"chunk Color";
+	
+	// Resize depth texture for chunk pass:
+	MTLTextureDescriptor *chunkDepthTextureDescriptor =
+	[MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
+													   width:_viewportSize.x
+													  height:_viewportSize.y
+												   mipmapped:NO];
+	chunkDepthTextureDescriptor.resourceOptions = MTLResourceStorageModePrivate;
+	chunkDepthTextureDescriptor.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
+	_chunkDepthTexture = [_device newTextureWithDescriptor:chunkDepthTextureDescriptor];
+	_chunkDepthTexture.label = @"chunk Depth";
+	
+	_chunkRenderPassDescriptor.colorAttachments[0].texture = _chunkColorTexture;
+	_chunkRenderPassDescriptor.depthAttachment.texture = _chunkDepthTexture;
 }
 
 - (void)renderWithCommandBuffer:(nonnull id<MTLCommandBuffer>)commandBuffer renderPassDescriptor:(nonnull MTLRenderPassDescriptor *)renderPassDescriptor {
@@ -395,6 +473,35 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	
 	/////////////////////////
 	
+	id<MTLRenderCommandEncoder> chunkRenderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:_chunkRenderPassDescriptor];
+	chunkRenderEncoder.label = @"Chunk Pass";
+	
+	[chunkRenderEncoder setViewport:(MTLViewport){0.0, 0.0, _viewportSize.x, _viewportSize.y, 0, 1.0 }];
+	[chunkRenderEncoder setDepthStencilState:_depthStencilState];
+	[chunkRenderEncoder setCullMode:MTLCullModeBack];
+	[chunkRenderEncoder setFrontFacingWinding:MTLWindingClockwise];
+	
+	[chunkRenderEncoder setVertexBytes:&_viewProjectionMatrices length:sizeof(ViewProjectionMatrices) atIndex:VertexInputIndexVP];
+	
+	// Draw Triangles:
+	[chunkRenderEncoder pushDebugGroup:@"Triangle Group Drawing"];
+	[chunkRenderEncoder setRenderPipelineState:_renderPipelineStatePC];
+	[chunkRenderEncoder setVertexBuffer:_vertexBuffer offset:0 atIndex:VertexInputIndexVertices];
+	[chunkRenderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:sizeof(triangleVertices)/sizeof(VertexPC)];
+	[chunkRenderEncoder popDebugGroup];
+	
+	// Draw Chunk:
+	[chunkRenderEncoder pushDebugGroup:@"Chunk Drawing"];
+	[chunkRenderEncoder setRenderPipelineState:_renderPipelineStatePT];
+	[chunkRenderEncoder setFragmentTexture:_texture atIndex:FragmentInputIndexTexture0];
+	[_chunk renderWallsWithEncoder:chunkRenderEncoder];
+	[_chunk renderFloorsWithEncoder:chunkRenderEncoder];
+	[chunkRenderEncoder popDebugGroup];
+	
+	[chunkRenderEncoder endEncoding];
+	
+	///////////////////////////
+	
 	// TODO(Xavier): Move things so the Drawable is gotten here.
 	// Currently there is a warning about getting it too early.
 	
@@ -402,26 +509,11 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	renderEncoder.label = @"Main Render Encoder";
 	
 	[renderEncoder setViewport:(MTLViewport){0.0, 0.0, _viewportSize.x, _viewportSize.y, 0, 1.0 }];
-	[renderEncoder setDepthStencilState:_depthStencilState];
 	[renderEncoder setCullMode:MTLCullModeBack];
 	[renderEncoder setFrontFacingWinding:MTLWindingClockwise];
 	
-	[renderEncoder setVertexBytes:&_viewProjectionMatrices length:sizeof(ViewProjectionMatrices) atIndex:VertexInputIndexVP];
-	
-	// Draw Triangles:
-	[renderEncoder pushDebugGroup:@"Triangle Group Drawing"];
-	[renderEncoder setRenderPipelineState:_renderPipelineStatePC];
-	[renderEncoder setVertexBuffer:_vertexBuffer offset:0 atIndex:VertexInputIndexVertices];
-	[renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:sizeof(triangleVertices)/sizeof(VertexPC)];
-	[renderEncoder popDebugGroup];
-	
-	// Draw Chunk:
-	[renderEncoder pushDebugGroup:@"Chunk Drawing"];
-	[renderEncoder setRenderPipelineState:_renderPipelineStatePT];
-	[renderEncoder setFragmentTexture:_texture atIndex:FragmentInputIndexTexture0];
-	[_chunk renderWallsWithEncoder:renderEncoder];
-	[_chunk renderFloorsWithEncoder:renderEncoder];
-	[renderEncoder popDebugGroup];
+	// TODO(Xavier): The special depth coloring of the composit may not be working because of the drawable texture.
+	// try rendering the terrain to another texture then combining the two in the composit stage.
 	
 	// Composite Water On Terrain:
 	[renderEncoder pushDebugGroup:@"Chunk Water Composite"];
@@ -430,7 +522,8 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	[renderEncoder setVertexBytes:&_waterOverlayViewProjectionMatrices length:sizeof(ViewProjectionMatrices) atIndex:VertexInputIndexVP];
 	[renderEncoder setFragmentTexture:_waterColorTexture atIndex:FragmentInputIndexTexture0];
 	[renderEncoder setFragmentTexture:_waterDepthTexture atIndex:FragmentInputIndexTexture1];
-	[renderEncoder setFragmentTexture:renderPassDescriptor.depthAttachment.texture atIndex:FragmentInputIndexTexture2];
+	[renderEncoder setFragmentTexture:_chunkColorTexture atIndex:FragmentInputIndexTexture2];
+	[renderEncoder setFragmentTexture:_chunkDepthTexture atIndex:FragmentInputIndexTexture3];
 	[renderEncoder setVertexBytes:quadVertices length:sizeof(quadVertices) atIndex:VertexInputIndexVertices];
 	[renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:sizeof(quadVertices)/sizeof(VertexPT)];
 	[renderEncoder popDebugGroup];
