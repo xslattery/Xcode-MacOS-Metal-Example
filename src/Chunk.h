@@ -10,13 +10,9 @@
 
 #import <Metal/Metal.h>
 
-#define WORLD_X 32
-#define WORLD_Z 32
-#define WORLD_Y 32
-
-#define CHUNK_LENGTH 32
-#define CHUNK_WIDTH  32
-#define CHUNK_HEIGHT 32
+#define CHUNK_LENGTH 16
+#define CHUNK_WIDTH  16
+#define CHUNK_HEIGHT 16
 
 @interface Chunk : NSObject
 

@@ -9,6 +9,7 @@
 #pragma once
 
 #import "Scene.h"
+#import <MetalKit/MetalKit.h>
 
 @interface Renderer : NSObject
 
@@ -25,8 +26,7 @@
 
 /// @method renderWithDrawable:
 /// @abstract Call to render to the passed drawable.
-/// @param drawable The MTLDrawable to render to.
-/// @param renderPassDescriptor The MTLRenderPassDescriptor to use.
-- (void)renderScene:(nonnull Scene *)scene withDrawable:(nonnull id<MTLDrawable>)drawable renderPassDescriptor:(nonnull MTLRenderPassDescriptor *)renderPassDescriptor;
+/// @param view The MTLView to render to.
+- (void)renderScene:(nonnull Scene *)scene withView:(nonnull MTKView *)view;
 
 @end

@@ -8,39 +8,14 @@
 
 #import "Chunk.h"
 #import "ShaderTypes.h"
-#import "Perlin.hpp"
+#import "Simplex.hpp"
 #import <vector>
 
+// Axis of the isometric view:
 static const simd::float2 xAxisDirection { 1, 18.0f/27.0f};
 static const simd::float2 zAxisDirection {-1, 18.0f/27.0f};
 
-static float generate_height_data ( float xx, float yy, float scale, int octaves, float persistance, float lacunarity, bool power ) {
-	if ( scale <= 0 ) scale = 0.0001f;
-	if ( octaves < 1 ) octaves = 1;
-	if ( persistance > 1 ) persistance = 1;
-	if ( persistance < 0 ) persistance = 0;
-	if ( lacunarity < 1 ) lacunarity = 1;
-	
-	float amplitude = 1.0f;
-	float frequency = 1.0f;
-	float noiseValue = 0.0f;
-	
-	for ( int i = 0; i < octaves; ++i ) {
-		float sampleX = xx / scale * frequency;
-		float sampleZ = yy / scale * frequency;
-		
-		float nv = noise_2d(sampleX, sampleZ);
-		
-		noiseValue += nv * amplitude;
-		
-		amplitude *= persistance;
-		frequency *= lacunarity;
-	}
-	
-	if ( power ) noiseValue = pow(2.71828182845904523536, noiseValue);
-	
-	return noiseValue;
-}
+static float generate_height_data ( float xx, float yy, float scale, int octaves, float persistance, float lacunarity, bool power );
 
 struct Wall {
 	uint16_t contents;
@@ -67,12 +42,16 @@ struct Floor {
 	NSUInteger _waterIndexCount;
 }
 
+//////////////////////////
 - (void)generateData {
 	if (_walls != nil) free(_walls);
 	if (_floors != nil) free(_floors);
 	
 	_walls = (Wall *)malloc(sizeof(Wall)*CHUNK_LENGTH*CHUNK_WIDTH*CHUNK_HEIGHT);
 	_floors = (Floor *)malloc(sizeof(Floor)*CHUNK_LENGTH*CHUNK_WIDTH*CHUNK_HEIGHT);
+	
+	// NOTE(Xavier): It may be fater to seperate this into loops
+	// for the walls and foors to decrease cache misses.
 	
 	for (size_t y = 0; y < CHUNK_HEIGHT; ++y) {
 		for (size_t z = 0; z < CHUNK_WIDTH; ++z) {
@@ -81,11 +60,7 @@ struct Floor {
 				if (y < height) {
 					_walls[y*(CHUNK_LENGTH*CHUNK_WIDTH) + z*(CHUNK_LENGTH) + x].contents = 1;
 				} else {
-//					if (y < 10) {
 						_walls[y*(CHUNK_LENGTH*CHUNK_WIDTH) + z*(CHUNK_LENGTH) + x].contents = 0;
-//					} else {
-//						_walls[y*(CHUNK_LENGTH*CHUNK_WIDTH) + z*(CHUNK_LENGTH) + x].contents = 2;
-//					}
 				}
 				
 				if (y < height + 1) {
@@ -104,12 +79,14 @@ struct Floor {
 	if (_floors != nil) free(_floors);
 }
 
+//////////////////////////
 - (void)generateMeshWithDevice:(nonnull id<MTLDevice>)device {
 	[self generateWallMeshWithDevice:device];
 	[self generateFloorMeshWithDevice:device];
 	[self generateWaterMeshWithDevice:device];
 }
 
+//////////////////////////
 - (void)generateWallMeshWithDevice:(nonnull id<MTLDevice>)device {
 	const simd::float2 textureTopLeft {0, 1.0f/512*68};
 	const simd::float2 textureBottomRight {1.0f/512*54,	0.0f};
@@ -156,6 +133,7 @@ struct Floor {
 	}
 }
 
+//////////////////////////
 - (void)generateFloorMeshWithDevice:(nonnull id<MTLDevice>)device {
 	const simd::float2 textureTopLeft {1.0f/512*54*0, 1.0f/512*68*2};
 	const simd::float2 textureBottomRight {1.0f/512*54*1, 1.0f/512*68*1};
@@ -202,6 +180,7 @@ struct Floor {
 	}
 }
 
+//////////////////////////
 - (void)generateWaterMeshWithDevice:(nonnull id<MTLDevice>)device {
 	const simd::float2 textureTopLeft {1.0f/512*54*3, 1.0f/512*68*3};
 	const simd::float2 textureBottomRight {1.0f/512*54*4, 1.0f/512*68*2};
@@ -248,6 +227,7 @@ struct Floor {
 	}
 }
 
+//////////////////////////
 - (void)renderWallsWithEncoder:(nonnull id<MTLRenderCommandEncoder>)commandEncoder {
 	if (_wallVertexBuffer != nil && _wallIndexBuffer != nil) {
 		[commandEncoder setVertexBuffer:_wallVertexBuffer offset:0 atIndex:VertexInputIndexVertices];
@@ -255,6 +235,7 @@ struct Floor {
 	}
 }
 
+//////////////////////////
 - (void)renderFloorsWithEncoder:(nonnull id<MTLRenderCommandEncoder>)commandEncoder {
 	if (_floorVertexBuffer != nil && _floorIndexBuffer != nil) {
 		[commandEncoder setVertexBuffer:_floorVertexBuffer offset:0 atIndex:VertexInputIndexVertices];
@@ -262,6 +243,7 @@ struct Floor {
 	}
 }
 
+//////////////////////////
 - (void)renderWaterWithEncoder:(nonnull id<MTLRenderCommandEncoder>)commandEncoder {
 	if (_waterVertexBuffer != nil && _waterIndexBuffer != nil) {
 		[commandEncoder setVertexBuffer:_waterVertexBuffer offset:0 atIndex:VertexInputIndexVertices];
@@ -270,3 +252,31 @@ struct Floor {
 }
 
 @end
+
+static float generate_height_data ( float xx, float yy, float scale, int octaves, float persistance, float lacunarity, bool power ) {
+	if ( scale <= 0 ) scale = 0.0001f;
+	if ( octaves < 1 ) octaves = 1;
+	if ( persistance > 1 ) persistance = 1;
+	if ( persistance < 0 ) persistance = 0;
+	if ( lacunarity < 1 ) lacunarity = 1;
+	
+	float amplitude = 1.0f;
+	float frequency = 1.0f;
+	float noiseValue = 0.0f;
+	
+	for ( int i = 0; i < octaves; ++i ) {
+		float sampleX = xx / scale * frequency;
+		float sampleZ = yy / scale * frequency;
+		
+		float nv = noise_2d(sampleX, sampleZ);
+		
+		noiseValue += nv * amplitude;
+		
+		amplitude *= persistance;
+		frequency *= lacunarity;
+	}
+	
+	if ( power ) noiseValue = pow(2.71828182845904523536, noiseValue);
+	
+	return noiseValue;
+}

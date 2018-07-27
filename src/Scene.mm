@@ -26,6 +26,7 @@ static const VertexPT quadVertices[] = {
 	{ { 1,  1, 0 }, { 1, 0 } },
 };
 
+
 static simd::float4x4 orthographic_projection(const float& left, const float& right, const float& bottom, const float& top, const float& near, const float& far) {
 	float sLength = 1.0f / (right - left);
 	float sHeight = 1.0f / (top   - bottom);
@@ -59,6 +60,7 @@ static simd::float4x4 orthographic_projection(const float& left, const float& ri
 	return simd::float4x4(P, Q, R, S);
 }
 
+
 static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	// TODO(Xavier): Redo all of the vector and matrix maths
 	// with custom version to avoid situations like this.
@@ -70,6 +72,7 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	result.e[3].z += direction.z;
 	return *(simd::float4x4 *)&result;
 }
+
 
 @implementation Scene {
 	id<MTLDevice> _device;
@@ -107,6 +110,8 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	Chunk *_chunk;
 }
 
+
+/////////////////////////////////////
 - (nullable instancetype)initWithDevice:(nonnull id<MTLDevice>)device size:(CGSize)size {
 	self = [super init];
 	if (!self) return self;
@@ -116,7 +121,10 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	_device = device;
 	assert(_device);
 	
-	//////////////////////////////
+	////////////////////
+	
+	// Setup the  view and projection matrices
+	// for the scene and the overlay:
 	
 	_nearPlane = 0.0;
 	_farPlane = 1000.0;
@@ -127,12 +135,15 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	_compositOverlayViewProjectionMatrices.projectionMatrix = orthographic_projection(-1.0, 1.0, -1.0, 1.0, _nearPlane, _farPlane);
 	_compositOverlayViewProjectionMatrices.viewMatrix = translate(matrix_identity_float4x4, simd::float3{0, 0, 500});
 	
-	//////////////////////////////
+	////////////////////
 	
 	_defaultLibrary = [_device newDefaultLibrary];
 	assert(_defaultLibrary);
 	
-	//////////////////////////////
+	////////////////////
+	
+	// Load and attach the shader for position
+	// & color vertex meshes to a pipeline:
 	
 	id<MTLFunction> vertexFunctionPC = [_defaultLibrary newFunctionWithName:@"vertexShaderPC"];
 	id<MTLFunction> fragmentFunctionPC = [_defaultLibrary newFunctionWithName:@"fragmentShaderPC"];
@@ -167,7 +178,10 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	_renderPipelineStatePC = [_device newRenderPipelineStateWithDescriptor:pipelineStateDescriptorPC error:&error];
 	assert(_renderPipelineStatePC);
 	
-	//////////////////////////////
+	////////////////////
+	
+	// Load and attach the shader for position
+	// & texcoord vertex meshes to a pipeline:
 	
 	id<MTLFunction> vertexFunctionPT = [_defaultLibrary newFunctionWithName:@"vertexShaderPT"];
 	id<MTLFunction> fragmentFunctionPT = [_defaultLibrary newFunctionWithName:@"fragmentShaderPT"];
@@ -204,6 +218,9 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	
 	//////////////////////////////
 	
+	// Create a pipeline specially for the water,
+	// because it should not blend with itself:
+	
 	MTLRenderPipelineDescriptor *waterPipelineStateDescriptorPT = [MTLRenderPipelineDescriptor new];
 	waterPipelineStateDescriptorPT.label = @"Water Textured Renderer Pipeline";
 	waterPipelineStateDescriptorPT.vertexDescriptor = vertexDescriptorPT;
@@ -223,6 +240,9 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	assert(_waterRenderPipelineStatePT);
 	
 	//////////////////////////////
+	
+	// Create a pipeline for rendering the
+	// texture overlay that the chunk gets rendered to:
 	
 	id<MTLFunction> vertexFunctionComposetPT = [_defaultLibrary newFunctionWithName:@"vertexShaderComposetPT"];
 	id<MTLFunction> fragmentFunctionChunkComposetPT = [_defaultLibrary newFunctionWithName:@"fragmentShaderChunkComposetPT"];
@@ -249,6 +269,9 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	
 	//////////////////////////////
 	
+	// Create a pipeline for rendering
+	// the water texture overlay:
+	
 	id<MTLFunction> fragmentFunctionWaterComposetPT = [_defaultLibrary newFunctionWithName:@"fragmentShaderWaterComposetPT"];
 	assert(fragmentFunctionWaterComposetPT);
 	
@@ -272,6 +295,8 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	
 	//////////////////////////////
 	
+	// Create general depth state:
+	
 	MTLDepthStencilDescriptor *depthStencilDescriptor = [MTLDepthStencilDescriptor new];
 	depthStencilDescriptor.depthCompareFunction = MTLCompareFunctionLess;
 	depthStencilDescriptor.depthWriteEnabled = YES;
@@ -279,6 +304,8 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	_depthStencilState = [_device newDepthStencilStateWithDescriptor:depthStencilDescriptor];
 	
 	//////////////////////////////
+	
+	// Create special depth state for rendering the water:
 	
 	MTLDepthStencilDescriptor *waterOverlayDepthStencilDescriptor = [MTLDepthStencilDescriptor new];
 	waterOverlayDepthStencilDescriptor.depthCompareFunction = MTLCompareFunctionAlways;
@@ -288,22 +315,25 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	
 	//////////////////////////////
 	
-	int xx = 0, zz = WORLD_Z, yy = 0;
+	// Calculate then build a custom mesh to act as
+	// backing walls for the special water depth effect:
+	
+	int xx = 0, zz = CHUNK_WIDTH, yy = 0;
 	simd::float2 neg_x_y_0 = ((xx)*xAxisDirection + (zz)*zAxisDirection) * 27;
 	neg_x_y_0 += simd::float2{ 0, 30 } * (yy);
 	float neg_x_y_0_depth = (xx + zz) - yy*2;
 	
-	xx = WORLD_X, zz = WORLD_Z, yy = 0;
+	xx = CHUNK_LENGTH, zz = CHUNK_WIDTH, yy = 0;
 	simd::float2 mid_x_y_1 = ((xx)*xAxisDirection + (zz)*zAxisDirection) * 27;
 	mid_x_y_1 += simd::float2{ 0, 30 } * (yy);
 	float mid_x_y_1_depth = (xx + zz) - yy*2;
 	
-	xx = 0, zz = WORLD_Z, yy = WORLD_Y;
+	xx = 0, zz = CHUNK_WIDTH, yy = CHUNK_HEIGHT;
 	simd::float2 mid_x_y_2 = ((xx)*xAxisDirection + (zz)*zAxisDirection) * 27;
 	mid_x_y_2 += simd::float2{ 0, 30 } * (yy);
 	float mid_x_y_2_depth = (xx + zz) - yy*2;
 	
-	xx = WORLD_X, zz = WORLD_Z, yy = WORLD_Y;
+	xx = CHUNK_LENGTH, zz = CHUNK_WIDTH, yy = CHUNK_HEIGHT;
 	simd::float2 mid_x_y_3 = ((xx)*xAxisDirection + (zz)*zAxisDirection) * 27;
 	mid_x_y_3 += simd::float2{ 0, 30 } * (yy);
 	float mid_x_y_3_depth = (xx + zz) - yy*2;
@@ -346,7 +376,9 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	
 	//////////////////////////////
 	
-	NSURL *imageFileLocation = [[NSBundle mainBundle] URLForResource:@"TileMap2" withExtension:@"png"];
+	// Load the texture used to render the chunk and water:
+	
+	NSURL *imageFileLocation = [[NSBundle mainBundle] URLForResource:@"TileMap" withExtension:@"png"];
 	int texWidth, texHeight, n;
 	stbi_set_flip_vertically_on_load(true);
 	uint8_t *bitmap = stbi_load([imageFileLocation.path UTF8String], &texWidth, &texHeight, &n, 4);
@@ -367,6 +399,7 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	//////////////////////////////
 	
 	// Create color texture for water pass:
+	
 	MTLTextureDescriptor *waterColorTextureDescriptor =
 	[MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
 													   width:_viewportSize.x
@@ -380,6 +413,7 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	_waterColorTexture.label = @"Water Color";
 	
 	// Create depth texture for water pass:
+	
 	MTLTextureDescriptor *waterDepthTextureDescriptor =
 	[MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
 													   width:_viewportSize.x
@@ -393,6 +427,7 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	_waterDepthTexture.label = @"Water Depth";
 	
 	// Create render pass descriptor to reuse for water pass:
+	
 	_waterRenderPassDescriptor = [MTLRenderPassDescriptor new];
 	_waterRenderPassDescriptor.colorAttachments[0].texture = _waterColorTexture;
 	_waterRenderPassDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
@@ -406,6 +441,7 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	//////////////////////////////
 	
 	// Create color texture for chunk pass:
+	
 	MTLTextureDescriptor *chunkColorTextureDescriptor =
 	[MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
 													   width:_viewportSize.x
@@ -419,6 +455,7 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	_chunkColorTexture.label = @"chunk Color";
 	
 	// Create depth texture for chunk pass:
+	
 	MTLTextureDescriptor *chunkDepthTextureDescriptor =
 	[MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
 													   width:_viewportSize.x
@@ -432,11 +469,11 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	_chunkDepthTexture.label = @"chunk Depth";
 	
 	// Create render pass descriptor to reuse for chunk pass:
+	
 	_chunkRenderPassDescriptor = [MTLRenderPassDescriptor new];
 	_chunkRenderPassDescriptor.colorAttachments[0].texture = _chunkColorTexture;
 	_chunkRenderPassDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
 	_chunkRenderPassDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
-//	_chunkRenderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor{0, 0, 0, 0};
 	
 	_chunkRenderPassDescriptor.depthAttachment.texture = _chunkDepthTexture;
 	_chunkRenderPassDescriptor.depthAttachment.loadAction = MTLLoadActionClear;
@@ -445,6 +482,8 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	
 	//////////////////////////////
 	
+	// Create the chunk that will be rendered:
+	
 	_chunk = [Chunk new];
 	[_chunk generateData];
 	[_chunk generateMeshWithDevice:_device];
@@ -452,11 +491,17 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	return self;
 }
 
+
+/////////////////////////////////////
 - (void)resize:(CGSize)size {
 	_viewportSize = {(float)size.width, (float)size.height};
 	_viewProjectionMatrices.projectionMatrix = orthographic_projection(-_viewportSize.x / 2.0f, _viewportSize.x / 2.0f, 0.0f, _viewportSize.y, _nearPlane, _farPlane);
 	
+	// NOTE(Xavier): Resizing the textures, just involves creating new ones with the correct sizes,
+	// this is because ARC will delete the existing ones for us.
+	
 	// Resize color texture for water pass:
+	
 	MTLTextureDescriptor *waterColorTextureDescriptor =
 	[MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
 													   width:_viewportSize.x
@@ -468,6 +513,7 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	_waterColorTexture.label = @"Water Color";
 	
 	// Resize depth texture for water pass:
+	
 	MTLTextureDescriptor *waterDepthTextureDescriptor =
 	[MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
 													   width:_viewportSize.x
@@ -484,6 +530,7 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	/////////////////////////
 
 	// Resize color texture for chunk pass:
+	
 	MTLTextureDescriptor *chunkColorTextureDescriptor =
 	[MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatBGRA8Unorm
 													   width:_viewportSize.x
@@ -495,6 +542,7 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	_chunkColorTexture.label = @"chunk Color";
 	
 	// Resize depth texture for chunk pass:
+	
 	MTLTextureDescriptor *chunkDepthTextureDescriptor =
 	[MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
 													   width:_viewportSize.x
@@ -509,7 +557,22 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	_chunkRenderPassDescriptor.depthAttachment.texture = _chunkDepthTexture;
 }
 
+
+/////////////////////////////////////
 - (void)renderWithCommandBuffer:(nonnull id<MTLCommandBuffer>)commandBuffer renderPassDescriptor:(nonnull MTLRenderPassDescriptor *)renderPassDescriptor {
+	//
+	// Render Process:
+	// 1. Render water to texture.
+	// 2. Render chunk & walls to texture.
+	// 3. Render the chunk texture to the view.
+	// 4. Render the water texture to the view, using the chunk texture as an input for the depth effect.
+	//
+	
+	////////////
+	
+	// 1. Draw Water to its texture:
+	// NOTE(Xavier): In theory this could be done asynchronously
+	
 	id<MTLRenderCommandEncoder> waterRenderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:_waterRenderPassDescriptor];
 	waterRenderEncoder.label = @"Water Pass";
 	
@@ -518,9 +581,8 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	[waterRenderEncoder setCullMode: MTLCullModeBack];
 	[waterRenderEncoder setFrontFacingWinding:MTLWindingClockwise];
 	
-	// Draw Water:
 	[waterRenderEncoder pushDebugGroup:@"Chunk Water Drawing"];
-	// TODO(Xavier): If there is no water the program will hault because
+	// FIXME(Xavier): If there is no water the program will hault because
 	// the Render Pipeline state has to render something.
 	// Fix this by first checking if the chunk contains any water.
 	[waterRenderEncoder setRenderPipelineState:_waterRenderPipelineStatePT];
@@ -531,7 +593,10 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	
 	[waterRenderEncoder endEncoding];
 	
-	/////////////////////////
+	///////////
+	
+	// 2. Draw the chunk and its backing walls to its texture:
+	// NOTE(Xavier): In theory this could be done asynchronously
 	
 	id<MTLRenderCommandEncoder> chunkRenderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:_chunkRenderPassDescriptor];
 	chunkRenderEncoder.label = @"Chunk Pass";
@@ -543,8 +608,8 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	
 	[chunkRenderEncoder setVertexBytes:&_viewProjectionMatrices length:sizeof(ViewProjectionMatrices) atIndex:VertexInputIndexVP];
 	
-	// Draw Triangles:
-	[chunkRenderEncoder pushDebugGroup:@"Triangle Group Drawing"];
+	// Draw Chunk Backing Walls:
+	[chunkRenderEncoder pushDebugGroup:@"Chunk Walls Drawing"];
 	[chunkRenderEncoder setRenderPipelineState:_renderPipelineStatePC];
 	[chunkRenderEncoder setVertexBuffer:_vertexBuffer offset:0 atIndex:VertexInputIndexVertices];
 	[chunkRenderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:12];
@@ -560,10 +625,7 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	
 	[chunkRenderEncoder endEncoding];
 	
-	///////////////////////////
-	
-	// TODO(Xavier): Move things so the Drawable is gotten here.
-	// Currently there is a warning about getting it too early.
+	//////////////
 	
 	id<MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
 	renderEncoder.label = @"Main Render Encoder";
@@ -572,10 +634,8 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	[renderEncoder setCullMode:MTLCullModeBack];
 	[renderEncoder setFrontFacingWinding:MTLWindingClockwise];
 	
-	// TODO(Xavier): The special depth coloring of the composit may not be working because of the drawable texture.
-	// try rendering the terrain to another texture then combining the two in the composit stage.
+	// 3. Composit Terrain:
 	
-	// Composit Terrain:
 	[renderEncoder pushDebugGroup:@"Chunk Composite"];
 	[renderEncoder setRenderPipelineState:_chunkRenderPipelineStateCompositePT];
 	[renderEncoder setDepthStencilState:_compositOverlayDepthStencilState];
@@ -586,7 +646,11 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	[renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:sizeof(quadVertices)/sizeof(VertexPT)];
 	[renderEncoder popDebugGroup];
 	
-	// Composite Water On Terrain:
+	// 4. Composite Water On Terrain:
+	// NOTE(Xavier): This stage is the reason why the chunk terrain is rendered to a texture.
+	// If you use the views drawable texture the results are unstable and produce artifacts.
+	// More research into this may be required.
+	
 	[renderEncoder pushDebugGroup:@"Water Composite"];
 	[renderEncoder setRenderPipelineState:_waterRenderPipelineStateCompositePT];
 	[renderEncoder setDepthStencilState:_compositOverlayDepthStencilState];

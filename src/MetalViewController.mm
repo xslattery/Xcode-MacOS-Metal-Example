@@ -81,18 +81,7 @@
 
 // Draw:
 - (void)drawInMTKView:(nonnull MTKView *)view {
-	// NOTE(Xavier): Documentation (https://developer.apple.com/library/archive/documentation/3DDrawing/Conceptual/MTLBestPracticesGuide/Drawables.html#//apple_ref/doc/uid/TP40016642-CH2-SW1)
-	// recomends using an autorelease pool around the currentDrawable to
-	// avoid possible deadlock situations with multiple drawables.
-	@autoreleasepool {
-		id<MTLDrawable> drawable = _view.currentDrawable;
-		MTLRenderPassDescriptor *renderPassDescriptor = _view.currentRenderPassDescriptor;
-		if (drawable != nil && renderPassDescriptor != nil) {
-			[_renderer renderScene: _scene
-					  withDrawable: drawable
-			  renderPassDescriptor: renderPassDescriptor];
-		}
-	}
+	[_renderer renderScene: _scene withView: view];
 }
 
 @end

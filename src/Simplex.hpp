@@ -1,9 +1,10 @@
-#ifndef _PERLIN_HPP_
-#define _PERLIN_HPP_
+#ifndef _SIMPLEX_HPP_
+#define _SIMPLEX_HPP_
 
 #include <cstdint>
 
 //
+// NOTE(Xavier): This is Based On
 // https://github.com/SRombauts/SimplexNoise/blob/master/src/SimplexNoise.cpp
 //
 
