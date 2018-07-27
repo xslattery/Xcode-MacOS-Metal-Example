@@ -288,10 +288,6 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	
 	//////////////////////////////
 	
-	#define WORLD_X 16
-	#define WORLD_Z 16
-	#define WORLD_Y 16
-	
 	int xx = 0, zz = WORLD_Z, yy = 0;
 	simd::float2 neg_x_y_0 = ((xx)*xAxisDirection + (zz)*zAxisDirection) * 27;
 	neg_x_y_0 += simd::float2{ 0, 30 } * (yy);
@@ -597,8 +593,7 @@ static simd::float4x4 translate(simd::float4x4 matrix, simd::float3 direction) {
 	[renderEncoder setVertexBytes:&_compositOverlayViewProjectionMatrices length:sizeof(ViewProjectionMatrices) atIndex:VertexInputIndexVP];
 	[renderEncoder setFragmentTexture:_waterColorTexture atIndex:FragmentInputIndexTexture0];
 	[renderEncoder setFragmentTexture:_waterDepthTexture atIndex:FragmentInputIndexTexture1];
-	[renderEncoder setFragmentTexture:_chunkColorTexture atIndex:FragmentInputIndexTexture2];
-	[renderEncoder setFragmentTexture:_chunkDepthTexture atIndex:FragmentInputIndexTexture3];
+	[renderEncoder setFragmentTexture:_chunkDepthTexture atIndex:FragmentInputIndexTexture2];
 	[renderEncoder setVertexBytes:quadVertices length:sizeof(quadVertices) atIndex:VertexInputIndexVertices];
 	[renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:sizeof(quadVertices)/sizeof(VertexPT)];
 	[renderEncoder popDebugGroup];

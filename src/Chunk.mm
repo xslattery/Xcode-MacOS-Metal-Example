@@ -11,10 +11,6 @@
 #import "Perlin.hpp"
 #import <vector>
 
-#define CHUNK_LENGTH 16
-#define CHUNK_WIDTH  16
-#define CHUNK_HEIGHT 16
-
 static const simd::float2 xAxisDirection { 1, 18.0f/27.0f};
 static const simd::float2 zAxisDirection {-1, 18.0f/27.0f};
 
@@ -85,7 +81,11 @@ struct Floor {
 				if (y < height) {
 					_walls[y*(CHUNK_LENGTH*CHUNK_WIDTH) + z*(CHUNK_LENGTH) + x].contents = 1;
 				} else {
-					_walls[y*(CHUNK_LENGTH*CHUNK_WIDTH) + z*(CHUNK_LENGTH) + x].contents = 0;
+//					if (y < 10) {
+						_walls[y*(CHUNK_LENGTH*CHUNK_WIDTH) + z*(CHUNK_LENGTH) + x].contents = 0;
+//					} else {
+//						_walls[y*(CHUNK_LENGTH*CHUNK_WIDTH) + z*(CHUNK_LENGTH) + x].contents = 2;
+//					}
 				}
 				
 				if (y < height + 1) {
@@ -105,14 +105,6 @@ struct Floor {
 }
 
 - (void)generateMeshWithDevice:(nonnull id<MTLDevice>)device {
-	
-//	int xx = 0, zz = 16, yy = 16;
-//	simd::float2 tileBottomMiddlePosition = ((xx)*xAxisDirection + (zz)*zAxisDirection) * 27;
-//	tileBottomMiddlePosition += simd::float2{ 0, 30 } * (yy);
-//	float tileDepth = (xx + zz) - yy*2;
-//
-//	NSLog(@"%f, %f, %f", tileBottomMiddlePosition.x, tileBottomMiddlePosition.y, tileDepth);
-	
 	[self generateWallMeshWithDevice:device];
 	[self generateFloorMeshWithDevice:device];
 	[self generateWaterMeshWithDevice:device];
@@ -121,8 +113,6 @@ struct Floor {
 - (void)generateWallMeshWithDevice:(nonnull id<MTLDevice>)device {
 	const simd::float2 textureTopLeft {0, 1.0f/512*68};
 	const simd::float2 textureBottomRight {1.0f/512*54,	0.0f};
-//	const simd::float2 textureTopLeft {1.0f/512*54*4, 1.0f/512*68*3};
-//	const simd::float2 textureBottomRight {1.0f/512*54*5, 1.0f/512*68*2};
 	
 	std::vector<VertexPT> vertexData;
 	std::vector<uint32_t> indexData;
@@ -130,7 +120,7 @@ struct Floor {
 	for (size_t y = 0; y < CHUNK_HEIGHT; ++y) {
 		for (size_t z = 0; z < CHUNK_WIDTH; ++z) {
 			for (size_t x = 0; x < CHUNK_LENGTH; ++x) {
-				if (_walls[y*(CHUNK_LENGTH*CHUNK_WIDTH) + z*(CHUNK_LENGTH) + x].contents != 0) {
+				if (_walls[y*(CHUNK_LENGTH*CHUNK_WIDTH) + z*(CHUNK_LENGTH) + x].contents == 1) {
 					float xx = x, yy = y, zz = z;
 					
 					simd::float2 tileBottomMiddlePosition {0, 0};
@@ -176,7 +166,7 @@ struct Floor {
 	for (size_t y = 0; y < CHUNK_HEIGHT; ++y) {
 		for (size_t z = 0; z < CHUNK_WIDTH; ++z) {
 			for (size_t x = 0; x < CHUNK_LENGTH; ++x) {
-				if (_floors[y*(CHUNK_LENGTH*CHUNK_WIDTH) + z*(CHUNK_LENGTH) + x].contents != 0) {
+				if (_floors[y*(CHUNK_LENGTH*CHUNK_WIDTH) + z*(CHUNK_LENGTH) + x].contents == 1) {
 					float xx = x, yy = y, zz = z;
 					
 					simd::float2 tileBottomMiddlePosition {0, 0};

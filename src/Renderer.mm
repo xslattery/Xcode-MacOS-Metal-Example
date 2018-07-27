@@ -36,7 +36,7 @@
 - (void)renderScene:(nonnull Scene *)scene withDrawable:(nonnull id<MTLDrawable>)drawable renderPassDescriptor:(nonnull MTLRenderPassDescriptor *)renderPassDescriptor {
 	
 	// Wait to ensure only MaxBuffersInFlight number of frames are getting proccessed
-	//   by any stage in the Metal pipeline (App, Metal, Drivers, GPU, etc)
+	// by any stage in the Metal pipeline (App, Metal, Drivers, GPU, etc)
 	dispatch_semaphore_wait(_inFlightSemaphore, DISPATCH_TIME_FOREVER);
 	
 	// Create a new command buffer for each render pass to the current drawable
@@ -48,7 +48,7 @@
 	__block dispatch_semaphore_t block_sema = _inFlightSemaphore;
 	[commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> buffer) {
 		 dispatch_semaphore_signal(block_sema);
-	 }];
+	}];
 	
 	[scene renderWithCommandBuffer:commandBuffer renderPassDescriptor:renderPassDescriptor];
 	

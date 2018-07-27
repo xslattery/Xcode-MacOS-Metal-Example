@@ -7,8 +7,7 @@
 // https://github.com/SRombauts/SimplexNoise/blob/master/src/SimplexNoise.cpp
 //
 
-static const uint8_t perm[256] =
-{
+static const uint8_t perm[256] = {
 	151, 160, 137, 91, 90, 15,
 	131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 140, 36, 103, 30, 69, 142, 8, 99, 37, 240, 21, 10, 23,
 	190, 6, 148, 247, 120, 234, 75, 0, 26, 197, 62, 94, 252, 219, 203, 117, 35, 11, 32, 57, 177, 33,
@@ -24,27 +23,23 @@ static const uint8_t perm[256] =
 	138, 236, 205, 93, 222, 114, 67, 29, 24, 72, 243, 141, 128, 195, 78, 66, 215, 61, 156, 180
 };
 
-static inline uint8_t hash ( int32_t i )
-{
+static inline uint8_t hash ( int32_t i ) {
 	return perm [ static_cast<uint8_t>(i) ];
 }
 
-static inline int32_t fast_floor ( float fp )
-{
+static inline int32_t fast_floor ( float fp ) {
 	int32_t i = static_cast<int32_t>(fp);
 	return (fp < i) ? (i - 1) : (i);
 }
 
-static float grad ( int32_t hash, float x, float y )
-{
+static float grad ( int32_t hash, float x, float y ) {
 	int32_t h = hash & 0x3F; 
 	float u = h < 4 ? x : y; 
 	float v = h < 4 ? y : x; 
 	return ((h & 1) ? -u : u) + ((h & 2) ? -2.0f*v : 2.0f*v);
 }
 
-static float noise_2d ( float x, float y )
-{
+static float noise_2d ( float x, float y ) {
 	const float F2 = 0.366025403f;
 	const float G2 = 0.211324865f;
 	float n0, n1, n2;

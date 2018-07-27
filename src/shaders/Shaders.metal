@@ -85,14 +85,14 @@ vertex RasterDataPT vertexShaderComposetPT ( uint vertexID [[vertex_id]], consta
 	return result;
 }
 
-fragment FragOutPT fragmentShaderChunkComposetPT ( RasterDataPT input [[stage_in]], texture2d<half> chunkColorTexture [[texture(FragmentInputIndexTexture0)]], texture2d<float> chunkDepthTexture [[texture(FragmentInputIndexTexture1)]] ) {
+fragment FragOutPT fragmentShaderChunkComposetPT ( RasterDataPT input [[stage_in]], texture2d<float> chunkColorTexture [[texture(FragmentInputIndexTexture0)]], texture2d<float> chunkDepthTexture [[texture(FragmentInputIndexTexture1)]] ) {
 	FragOutPT result;
 	
 	constexpr sampler textureSampler (mag_filter::nearest, min_filter::nearest);
-	const half4 chunkColorSample = chunkColorTexture.sample(textureSampler, input.textureCoord);
+	const float4 chunkColorSample = chunkColorTexture.sample(textureSampler, input.textureCoord);
 	const float4 chunkDepthSample = chunkDepthTexture.sample(textureSampler, input.textureCoord);
 	
-	const float4 chunkColor = float4(chunkColorSample.r, chunkColorSample.g, chunkColorSample.b, chunkColorSample.a);
+	const float4 chunkColor = chunkColorSample;
 	const float chunkDepth = chunkDepthSample.r;
 	
 	result.color = chunkColor;
@@ -102,20 +102,18 @@ fragment FragOutPT fragmentShaderChunkComposetPT ( RasterDataPT input [[stage_in
 }
 
 
-fragment FragOutPT fragmentShaderWaterComposetPT ( RasterDataPT input [[stage_in]], texture2d<half> waterColorTexture [[texture(FragmentInputIndexTexture0)]], texture2d<float> waterDepthTexture [[texture(FragmentInputIndexTexture1)]], texture2d<half> chunkColorTexture [[texture(FragmentInputIndexTexture2)]] , texture2d<float> chunkDepthTexture [[texture(FragmentInputIndexTexture3)]] ) {
+fragment FragOutPT fragmentShaderWaterComposetPT ( RasterDataPT input [[stage_in]], texture2d<float> waterColorTexture [[texture(FragmentInputIndexTexture0)]], texture2d<float> waterDepthTexture [[texture(FragmentInputIndexTexture1)]], texture2d<float> chunkDepthTexture [[texture(FragmentInputIndexTexture2)]] ) {
 	FragOutPT result;
 	
 	constexpr sampler textureSampler (mag_filter::nearest, min_filter::nearest);
-	const half4 waterColorSample = waterColorTexture.sample(textureSampler, input.textureCoord);
+	const float4 waterColorSample = waterColorTexture.sample(textureSampler, input.textureCoord);
 	const float4 waterDepthSample = waterDepthTexture.sample(textureSampler, input.textureCoord);
-	const half4 chunkColorSample = chunkColorTexture.sample(textureSampler, input.textureCoord);
 	const float4 chunkDepthSample = chunkDepthTexture.sample(textureSampler, input.textureCoord);
 	
 	const float waterDepth = waterDepthSample.r;
 	const float chunkDepth = chunkDepthSample.r;
 	
 	const float4 waterColor = float4(waterColorSample.r, waterColorSample.g, waterColorSample.b, waterColorSample.a);
-//	const float4 chunkColor = float4(chunkColorSample.r, chunkColorSample.g, chunkColorSample.b, chunkColorSample.a);
 	
 	if (chunkDepth < waterDepth) {
 		result.color = float4(0, 0, 0, 0);
